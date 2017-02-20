@@ -9,6 +9,15 @@ public class ModuleGame {
 
     public static void main(String[] args) {
 
+        // Controllers
+        String humanController = "controllers.multiPlayer.human.Agent";
+        String testController = "controllers.aimodule.Test.Agent";
+
+        // Tests
+        String sampleGAController = "controllers.multiPlayer.sampleGA.Agent";
+
+        String controllers = humanController + " " + sampleGAController;
+
         // Available games:
         String gamePath = "aimodule/";
         String gameName = "cake";
@@ -27,11 +36,11 @@ public class ModuleGame {
         // executed. null if not to save.
 
         // 1. This starts a game, in a level, played by two humans.
-        ArcadeMachine.playOneGameMulti(game, level1, recordActionsFile, seed);
+        //ArcadeMachine.playOneGameMulti(game, level1, recordActionsFile, seed);
 
         // 2. This plays a game in a level by the controllers. If one of the
         // players is human, change the playerID passed
         // to the runOneGame method to be that of the human player (0 or 1).
-        //ArcadeMachine.runOneGame(game, level1, visuals, controllers, recordActionsFile, seed, 0);S
+        ArcadeMachine.runOneGame(game, level1, visuals, controllers, recordActionsFile, seed, 0);
     }
 }
