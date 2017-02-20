@@ -1,0 +1,29 @@
+BasicGame key_handler=Pulse no_players=2 square_size=50
+    SpriteSet
+        background > Immovable img=aimodule/chamber_floor
+        wall > Immovable img=aimodule/chamber_wall
+        cake > Immovable img=aimodule/cake
+        portalShoot > Missile img=aimodule/shot_portal
+        laser > Missile img=aimodule/shot_laser
+        subject > ShootAvatar stype=portalShoot img=aimodule/chell_blue
+        turret > ShootAvatar stype=laser img=aimodule/turret
+
+    LevelMapping
+        . > background
+        w > wall
+        A > subject background
+        T > turret background
+        c > cake background
+
+    InteractionSet
+        subject turret wall > stepBack
+        turret subject wall cake > stepBack
+        laser wall > killSprite
+        portalShoot wall > killSprite
+        subject laser > killSprite
+
+    TerminationSet
+        SpriteCounter stype=cake    limit=0 win=True,False
+        SpriteCounter stype=subject limit=0 win=False,True
+
+
