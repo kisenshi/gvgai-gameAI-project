@@ -1,6 +1,6 @@
 BasicGame key_handler=Pulse no_players=2 square_size=50
     SpriteSet
-        background > Immovable img=aimodule/chamber_floor
+        floor > Immovable img=aimodule/chamber_floor
         wall > Immovable img=aimodule/chamber_wall
 
         cake > Immovable img=aimodule/cake
@@ -11,23 +11,25 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
             portalShootBlue > img=aimodule/shot_portal_blue
             portalShootOrange > img=aimodule/shot_portal_orange
 
-        portal > Door
-            portalBlue > singleton=True img=aimodule/chamber_wall_blue
-            portalOrange > singleton=True img=aimodule/chamber_wall_orange
+        portal >
+            portalBlue > Portal stype=portalOrange img=aimodule/chamber_wall_blue
+            portalOrange > Portal stype=portalBlue img=aimodule/chamber_wall_orange
 
         movable >
-            subject > ShootAvatar
-                subjectBlue > stype=portalShootBlue img=aimodule/chell_blue
-                subjectOrange > stype=portalShootOrange img=aimodule/chell_orange
+            subject >
+                subjectNoShooter > MovingAvatar img=aimodule/chell_blue
+                subjectShooter > ShootAvatar
+                    subjectBlue > stype=portalShootBlue img=aimodule/chell_blue
+                    subjectOrange > stype=portalShootOrange img=aimodule/chell_orange
 
             turret > ShootAvatar stype=laser img=aimodule/turret
 
     LevelMapping
-        . > background
+        . > floor
         w > wall
-        A > subjectBlue background
-        T > turret background
-        c > cake background
+        A > subjectBlue floor
+        T > turret floor
+        c > cake floor
 
     InteractionSet
         movable wall movable > stepBack
@@ -36,21 +38,20 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         subject laser > killSprite
         cake subject > killSprite
 
-        portalShootBlue wall  > transformToSingleton stype=subjectBlue stype_other=subjectOrange
+        subject portal > teleportToExit
+
+        portalShootBlue wall  > transformToAll stype=subjectBlue stypeTo=subjectOrange
+        portalShootBlue wall  > killSprite
+        wall portalShootBlue > transformToAll stype=portalBlue stypeTo=wall
         wall portalShootBlue > killAll stype=subjectBlue
         wall portalShootBlue > transformTo stype=portalBlue
 
-        portalShootOrange wall  > transformToSingleton stype=subjectOrange stype_other=subjectBlue
+
+        portalShootOrange wall  > transformToAll stype=subjectOrange stypeTo=subjectBlue
+        portalShootOrange wall  > killSprite
+        wall portalShootOrange > transformToAll stype=portalOrange stypeTo=wall
         wall portalShootOrange > killAll stype=subjectOrange
         wall portalShootOrange > transformTo stype=portalOrange
-
-
-
-
-
-
-
-
 
     TerminationSet
         SpriteCounter stype=cake    limit=0 win=True,False
