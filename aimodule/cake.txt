@@ -7,9 +7,9 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
 
         laser > Missile img=aimodule/shot_laser
 
-        portalShoot > Missile
-            portalShootBlue > img=aimodule/shot_portal_blue
-            portalShootOrange > img=aimodule/shot_portal_orange
+        portalShot > Missile
+            portalShotBlue > img=aimodule/shot_portal_blue
+            portalShotOrange > img=aimodule/shot_portal_orange
 
         portal > Immovable
             disabledPortal >
@@ -24,8 +24,8 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
             subject >
                 subjectNoShooter > MovingAvatar img=aimodule/chell_blue
                 subjectShooter > ShootAvatar
-                    subjectBlue > stype=portalShootBlue img=aimodule/chell_blue
-                    subjectOrange > stype=portalShootOrange img=aimodule/chell_orange
+                    subjectBlue > stype=portalShotBlue img=aimodule/chell_blue
+                    subjectOrange > stype=portalShotOrange img=aimodule/chell_orange
 
             turret > ShootAvatar stype=laser img=aimodule/turret
 
@@ -54,17 +54,17 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
 
 
         # Logic to create Portals when shooting to a wall. Still can't believe it is working *.*
-        portalShootBlue wall  > transformToAll stype=subjectBlue stypeTo=subjectOrange
-        portalShootBlue wall  > killSprite
-        wall portalShootBlue > transformToAll stype=portalBlue stypeTo=wall
-        wall portalShootBlue > killAll stype=subjectBlue
-        wall portalShootBlue > transformTo stype=portalBlue
+        portalShotBlue wall  > transformToAll stype=subjectBlue stypeTo=subjectOrange
+        portalShotBlue wall  > killSprite
+        wall portalShotBlue > transformToAll stype=portalBlue stypeTo=wall
+        wall portalShotBlue > killAll stype=subjectBlue
+        wall portalShotBlue > transformTo stype=portalBlue
 
-        portalShootOrange wall  > transformToAll stype=subjectOrange stypeTo=subjectBlue
-        portalShootOrange wall  > killSprite
-        wall portalShootOrange > transformToAll stype=portalOrange stypeTo=wall
-        wall portalShootOrange > killAll stype=subjectOrange
-        wall portalShootOrange > transformTo stype=portalOrange
+        portalShotOrange wall  > transformToAll stype=subjectOrange stypeTo=subjectBlue
+        portalShotOrange wall  > killSprite
+        wall portalShotOrange > transformToAll stype=portalOrange stypeTo=wall
+        wall portalShotOrange > killAll stype=subjectOrange
+        wall portalShotOrange > transformTo stype=portalOrange
 
     TerminationSet
         SpriteCounter stype=cake    limit=0 win=True,False
