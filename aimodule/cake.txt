@@ -21,6 +21,7 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         laser wall > killSprite
         portalShoot wall > killSprite
         subject laser > killSprite
+        cake subject > killSprite
 
     TerminationSet
         SpriteCounter stype=cake    limit=0 win=True,False
