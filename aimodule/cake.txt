@@ -20,14 +20,12 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
                 portalBlue > stype=portalOrange img=aimodule/chamber_wall_blue
                 portalOrange > stype=portalBlue img=aimodule/chamber_wall_orange
 
-        movable >
+        movable > ShootAvatar
             subject >
-                subjectNoShooter > MovingAvatar img=aimodule/chell_blue
-                subjectShooter > ShootAvatar
-                    subjectBlue > stype=portalShotBlue img=aimodule/chell_blue
-                    subjectOrange > stype=portalShotOrange img=aimodule/chell_orange
+                subjectBlue > stype=portalShotBlue img=aimodule/chell_blue
+                subjectOrange > stype=portalShotOrange img=aimodule/chell_orange
 
-            turret > ShootAvatar stype=laser img=aimodule/turret
+            turret > stype=laser img=aimodule/turret
 
     LevelMapping
         . > floor
@@ -38,8 +36,8 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
 
     InteractionSet
         movable wall movable > stepBack
-        turret cake > stepBack
         laser wall > killSprite
+        turret cake > stepBack
         subject laser > killSprite
         cake subject > killSprite
 
@@ -65,6 +63,11 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         wall portalShotOrange > transformToAll stype=portalOrange stypeTo=wall
         wall portalShotOrange > killAll stype=subjectOrange
         wall portalShotOrange > transformTo stype=portalOrange
+
+
+        # shots should not go through Portals
+        portalShotBlue portal > killSprite
+        portalShotOrange portal > killSprite
 
     TerminationSet
         SpriteCounter stype=cake    limit=0 win=True,False
