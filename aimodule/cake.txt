@@ -7,7 +7,7 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
 
         laser > Missile img=aimodule/shot_laser
 
-        portalShot > Missile
+        portalShot > Missile singleton=True
             portalShotBlue > img=aimodule/shot_portal_blue
             portalShotOrange > img=aimodule/shot_portal_orange
 
@@ -37,7 +37,7 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
     InteractionSet
         movable wall movable > stepBack
         laser wall > killSprite
-        turret cake > stepBack
+        turret cake portal > stepBack
         subject laser > killSprite
         cake subject > killSprite
 
