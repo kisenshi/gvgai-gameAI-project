@@ -7,13 +7,13 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
 
         laser > Missile img=aimodule/shot_laser
 
-        portalShoot > Missile singleton=True
+        portalShoot > Missile
             portalShootBlue > img=aimodule/shot_portal_blue
             portalShootOrange > img=aimodule/shot_portal_orange
 
-        portal > Immovable timeToLive=10
-            portalBlue > img=aimodule/chamber_wall_blue
-            portalOrange > img=aimodule/chamber_wall_orange
+        portal > Door
+            portalBlue > singleton=True img=aimodule/chamber_wall_blue
+            portalOrange > singleton=True img=aimodule/chamber_wall_orange
 
         movable >
             subject > ShootAvatar
@@ -33,9 +33,24 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         movable wall movable > stepBack
         turret cake > stepBack
         laser wall > killSprite
-        portalShoot wall > killSprite
         subject laser > killSprite
         cake subject > killSprite
+
+        portalShootBlue wall  > transformToSingleton stype=subjectBlue stype_other=subjectOrange
+        wall portalShootBlue > killAll stype=subjectBlue
+        wall portalShootBlue > transformTo stype=portalBlue
+
+        portalShootOrange wall  > transformToSingleton stype=subjectOrange stype_other=subjectBlue
+        wall portalShootOrange > killAll stype=subjectOrange
+        wall portalShootOrange > transformTo stype=portalOrange
+
+
+
+
+
+
+
+
 
     TerminationSet
         SpriteCounter stype=cake    limit=0 win=True,False
