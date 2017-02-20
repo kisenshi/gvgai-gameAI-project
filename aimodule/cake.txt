@@ -11,9 +11,14 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
             portalShootBlue > img=aimodule/shot_portal_blue
             portalShootOrange > img=aimodule/shot_portal_orange
 
-        portal >
-            portalBlue > Portal stype=portalOrange img=aimodule/chamber_wall_blue
-            portalOrange > Portal stype=portalBlue img=aimodule/chamber_wall_orange
+        portal > Immovable
+            disabledPortal >
+                portalBlueDisabled > img=aimodule/chamber_wall_blue
+                portalOrangeDisabled > img=aimodule/chamber_wall_orange
+
+            workingPortal > Portal
+                portalBlue > stype=portalOrange img=aimodule/chamber_wall_blue
+                portalOrange > stype=portalBlue img=aimodule/chamber_wall_orange
 
         movable >
             subject >
@@ -38,14 +43,22 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         subject laser > killSprite
         cake subject > killSprite
 
-        subject portal > teleportToExit
+        # To avoid infinite teleportation the exit portal is disabled during a small period of time
+        subject portalBlue > transformToAll stype=portalOrange stypeTo=portalOrangeDisabled
+        subject portalBlue > addTimer timer=30 ftype=transformToAll stype=portalOrangeDisabled stypeTo=portalOrange
+        subject portalOrange > transformToAll stype=portalBlue stypeTo=portalBlueDisabled
+        subject portalOrange > addTimer timer=30 ftype=transformToAll stype=portalBlueDisabled stypeTo=portalBlue
 
+        # If the portal is enabled, Chell is teleported to the other one
+        subject workingPortal > teleportToExit
+
+
+        # Logic to create Portals when shooting to a wall. Still can't believe it is working *.*
         portalShootBlue wall  > transformToAll stype=subjectBlue stypeTo=subjectOrange
         portalShootBlue wall  > killSprite
         wall portalShootBlue > transformToAll stype=portalBlue stypeTo=wall
         wall portalShootBlue > killAll stype=subjectBlue
         wall portalShootBlue > transformTo stype=portalBlue
-
 
         portalShootOrange wall  > transformToAll stype=subjectOrange stypeTo=subjectBlue
         portalShootOrange wall  > killSprite
