@@ -38,7 +38,7 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         c > cake floor
 
     InteractionSet
-        movable wall movable > stepBack
+        movable wall movable EOS > stepBack
         laser wall > killSprite
         turret cake portal > stepBack
         subject laser trap > killSprite
