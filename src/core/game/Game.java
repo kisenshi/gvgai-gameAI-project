@@ -1015,7 +1015,7 @@ public abstract class Game
         this.eventHandling();           //handle events such collisions.
         this.clearAll(fwdModel);        //clear all additional data, including dead sprites.
         this.terminationHandling();     //check for game termination.
-        this.checkTimeOut();            //Check for end of game by time steps.
+        //this.checkTimeOut();            //Check for end of game by time steps.
 
         //if(gameTick == 0 || isEnded)
         //    fwdModel.printObservationGrid(); //uncomment this to show the observation grid.
