@@ -1,6 +1,6 @@
 BasicGame key_handler=Pulse no_players=2 square_size=50
     SpriteSet
-        floor > Immovable img=aimodule/chamber_floor
+        floor > Immovable hidden=True img=aimodule/chamber_floor
         wall > Immovable img=aimodule/chamber_wall
 
         cake > Immovable img=aimodule/cake
