@@ -1,6 +1,8 @@
 BasicGame key_handler=Pulse no_players=2 square_size=50
     SpriteSet
         floor > Immovable hidden=True img=aimodule/chamber_floor
+        trap > Immovable img=aimodule/it_is_a_trap
+
         wall > Immovable img=aimodule/chamber_wall
 
         cake > Immovable img=aimodule/cake
@@ -30,6 +32,7 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
     LevelMapping
         . > floor
         w > wall
+        x > trap
         A > subjectBlue floor
         T > turret floor
         c > cake floor
@@ -38,7 +41,7 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         movable wall movable > stepBack
         laser wall > killSprite
         turret cake portal > stepBack
-        subject laser > killSprite
+        subject laser trap > killSprite
         cake subject > killSprite
 
         # To avoid infinite teleportation the exit portal is disabled during a small period of time

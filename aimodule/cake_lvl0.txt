@@ -1,8 +1,8 @@
 wwwwwwwwwwwwwwwwwwwwww
-w....................w
-w...........ww.......w
-w...A.......ww.......w
-www.w...wwwwww.......w
+w.......x............w
+w.......x...ww.......w
+w...A...x...ww.......w
+wxxxxxxxwwwwww.......w
 w.......wwwwww.......w
 w.T..............ww..w
 w................wwwww
