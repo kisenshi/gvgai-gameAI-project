@@ -270,6 +270,8 @@ public class Agent extends AbstractMultiPlayer {
         }else System.out.print(str + ": 0; ");
     }
 
+    /* Fills the neighbours list with the reachable positions from the current one
+     * It is checked TOP, RIGHT, DOWN and LEFT as it is not possible to move in diagonal */
     private void getCurrentPositionNeighbours(List<Vector2d> neighbours, Vector2d c_pos){
         int x = (int)c_pos.x / block_size;
         int y = (int)c_pos.y / block_size;
@@ -295,38 +297,9 @@ public class Agent extends AbstractMultiPlayer {
         return;
     }
 
-    private void getCurrentPositionNeighbours2(List<Vector2d> neighbours, Vector2d c_pos, List<VectorKeys> visited){
-        int x = (int)c_pos.x / block_size;
-        int y = (int)c_pos.y / block_size;
-
-        // NOTE: It is assumed that every map is surrounded by walls so there is no chance of going 'out of bounds' and
-        // therefore no need to check if i-1, i+1, j-1 or j+1 is out of bounds
-        VectorKeys keys = new VectorKeys(x-1, y);
-        if ((!visited.contains(keys)) && agent_nav_matrix[x-1][y]){
-            neighbours.add(new Vector2d((x-1)*block_size, y*block_size));
-            visited.add(keys);
-        }
-
-        keys.updateKeys(x+1, y);
-        if ((!visited.contains(keys)) && agent_nav_matrix[x+1][y]){
-            neighbours.add(new Vector2d((x+1)*block_size, y*block_size));
-            visited.add(keys);
-        }
-
-        keys.updateKeys(x, y-1);
-        if ((!visited.contains(keys)) && agent_nav_matrix[x][y-1]){
-            neighbours.add(new Vector2d(x*block_size, (y-1)*block_size));
-            visited.add(keys);
-        }
-
-        keys.updateKeys(x, y+1);
-        if (agent_nav_matrix[x][y+1]){
-            neighbours.add(new Vector2d(x*block_size, (y+1)*block_size));
-            visited.add(keys);
-        }
-        return;
-    }
-
+    /* Object to be used in the PriorityQueue containing the vector2d position and the cost assigned to it
+    *  It has been implemented the Comparable interface (compareTo function) to be able to be used in the
+    *  priority Queue directly */
     private class NodePosition implements Comparable<NodePosition>{
         public Vector2d position;
         public double cost;
@@ -349,7 +322,7 @@ public class Agent extends AbstractMultiPlayer {
     }
 
     /* Solution for being able to map two Keys to be able to use vector coordinates as index
-    *  Found in StackOverflow: http://stackoverflow.com/a/14678042 */
+    *  Found in StackOverflow: http://stackoverflow.com/a/14678042 and adapted to my needs */
     public class VectorKeys {
 
         private int x;
@@ -382,6 +355,11 @@ public class Agent extends AbstractMultiPlayer {
 
     }
 
+    private double aStarHeuristic(Vector2d position, Vector2d goal){
+        // The distance to the goal is returned as the heuristic
+        return position.dist(goal);
+    }
+
     private List<Vector2d> aStarPath(Vector2d start, Vector2d goal){
         System.out.println("Looking path from "+start+" to "+goal);
 
@@ -389,7 +367,6 @@ public class Agent extends AbstractMultiPlayer {
         Map<VectorKeys, Vector2d> visited_from = new HashMap<>();
         Map<VectorKeys, Double> cost_so_far = new HashMap<>();
         List<Vector2d> neighbours = new ArrayList<>();
-        List<VectorKeys> visited_neighbours = new ArrayList<>();
 
         NodePosition startNode = new NodePosition(start, 0);
         frontier.add(startNode);
@@ -400,7 +377,6 @@ public class Agent extends AbstractMultiPlayer {
 
         boolean goal_found = false;
 
-        int iterations = 0;
         while(!frontier.isEmpty()){
             NodePosition currentNode = frontier.poll();
             //System.out.println(currentNode.position);
@@ -422,32 +398,14 @@ public class Agent extends AbstractMultiPlayer {
                 double next_cost = cost_so_far.get(currentNode_keys) + 1; // all costs are 1
 
                 if (!cost_so_far.containsKey(next_keys) || next_cost < cost_so_far.get(next_keys)){
-                    NodePosition next_node_pos = new NodePosition(next, next_cost);
-
-                    //System.out.println("Pos: "+next_node_pos.position + " cost" + next_node_pos.cost);
+                    NodePosition next_node_pos = new NodePosition(next, next_cost+aStarHeuristic(next, goal));
 
                     frontier.add(next_node_pos);
                     visited_from.put(next_keys, currentNode.position);
                     cost_so_far.put(next_keys, next_cost);
-
-                    //System.out.println(visited_from.size());
-                    //System.out.println(cost_so_far.size());
-
-                    /*if(next.equals(goal)){
-                        System.out.println("ENQUEING GOAL: "+next);
-                        System.out.println(visited_from.get(next));
-                        System.out.println(visited_from.size());
-                    }*/
                 }
             }
-            iterations++;
-            //System.out.println();
         }
-
-        /*System.out.println(visited_from.size());
-        System.out.println(visited_from.size());
-        visited_from.forEach((k,v)->System.out.println("("+k.x+","+k.y+") : "+v));*/
-
 
         // Reconstruct the path
         List<Vector2d> path = null;
