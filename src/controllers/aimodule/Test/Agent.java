@@ -180,11 +180,30 @@ public class Agent extends AbstractMultiPlayer {
 
         // JUST 1 CAKE ATM
         Vector2d cakepos = cake_pieces.get(0).position;
-
         Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
         Vector2d agentpos = stateObs.getAvatarPosition(id);
 
-        System.out.println();
+        int cakearea = -1;
+        int avatararea = -1;
+        int agentarea = -1;
+
+        /* In which area is each element? */
+        int n_areas = areas.size();
+        for (int k=0; k < areas.size(); k++){
+            ArrayList c_area = areas.get(k);
+            if ((cakearea == -1)&&(c_area.contains(cakepos))){
+                cakearea = k;
+            }
+            if ((avatararea == -1)&&(c_area.contains(avatarpos))){
+                avatararea = k;
+            }
+            if ((agentarea == -1)&&(c_area.contains(agentpos))){
+                agentarea = k;
+            }
+        }
+
+        /*System.out.println();
+        System.out.print("DISTRIBUTION: cake: "+cakearea+"avatar: "+avatararea+"agent: "+agentarea);
 
         System.out.println();
         for (int i = 0; i < grid_width; i++){
@@ -204,9 +223,10 @@ public class Agent extends AbstractMultiPlayer {
             }
             System.out.println();
         }
-        System.out.println();
+        System.out.println();*/
 
         ArrayList<ACTIONS> a = stateObs.getAvailableActions(id);
+        System.out.println(a);
         return ACTIONS.ACTION_NIL;
     }
 
