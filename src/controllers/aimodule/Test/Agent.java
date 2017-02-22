@@ -21,11 +21,6 @@ public class Agent extends AbstractMultiPlayer {
     protected List<ArrayList<Vector2d>> areas = new ArrayList<ArrayList<Vector2d>>();
     protected int block_size;
 
-
-    private Vector2d getBlockCoordinate(Vector2d position){
-        return new Vector2d(position.x, position.y);
-    }
-
     /**
      * initialize all variables for the agent
      * @param stateObs Observation of the current state.
@@ -37,13 +32,9 @@ public class Agent extends AbstractMultiPlayer {
         opp_id = (playerID + 1) % 2; // player ID of the opponent. We know that there are only 2 players in the game
         block_size = stateObs.getBlockSize();
 
-        //  Positions belonging to different areas are created
-        int id_area = 0;
-
         // Goes through every floor
         ArrayList<Observation>[] fixedPositions = stateObs.getImmovablePositions();
         int block_size = stateObs.getBlockSize();
-
 
         ArrayList<Observation> floor_elements = fixedPositions[floor_id];
         Dimension grid_dimension = stateObs.getWorldDimension();
@@ -124,10 +115,10 @@ public class Agent extends AbstractMultiPlayer {
             }
         }
 
-        System.out.println(areas.get(0));
+        /*System.out.println(areas.get(0));
         System.out.println(areas.get(1));
         System.out.println(areas.get(2));
-        System.out.println(areas.get(3));
+        System.out.println(areas.get(3));*/
     }
 
     /**
