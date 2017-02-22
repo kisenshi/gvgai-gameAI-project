@@ -276,17 +276,53 @@ public class Agent extends AbstractMultiPlayer {
 
         // NOTE: It is assumed that every map is surrounded by walls so there is no chance of going 'out of bounds' and
         // therefore no need to check if i-1, i+1, j-1 or j+1 is out of bounds
+
         if (agent_nav_matrix[x-1][y]){
             neighbours.add(new Vector2d((x-1)*block_size, y*block_size));
         }
+
         if (agent_nav_matrix[x+1][y]){
             neighbours.add(new Vector2d((x+1)*block_size, y*block_size));
         }
+
         if (agent_nav_matrix[x][y-1]){
             neighbours.add(new Vector2d(x*block_size, (y-1)*block_size));
         }
+
         if (agent_nav_matrix[x][y+1]){
             neighbours.add(new Vector2d(x*block_size, (y+1)*block_size));
+        }
+        return;
+    }
+
+    private void getCurrentPositionNeighbours2(List<Vector2d> neighbours, Vector2d c_pos, List<VectorKeys> visited){
+        int x = (int)c_pos.x / block_size;
+        int y = (int)c_pos.y / block_size;
+
+        // NOTE: It is assumed that every map is surrounded by walls so there is no chance of going 'out of bounds' and
+        // therefore no need to check if i-1, i+1, j-1 or j+1 is out of bounds
+        VectorKeys keys = new VectorKeys(x-1, y);
+        if ((!visited.contains(keys)) && agent_nav_matrix[x-1][y]){
+            neighbours.add(new Vector2d((x-1)*block_size, y*block_size));
+            visited.add(keys);
+        }
+
+        keys.updateKeys(x+1, y);
+        if ((!visited.contains(keys)) && agent_nav_matrix[x+1][y]){
+            neighbours.add(new Vector2d((x+1)*block_size, y*block_size));
+            visited.add(keys);
+        }
+
+        keys.updateKeys(x, y-1);
+        if ((!visited.contains(keys)) && agent_nav_matrix[x][y-1]){
+            neighbours.add(new Vector2d(x*block_size, (y-1)*block_size));
+            visited.add(keys);
+        }
+
+        keys.updateKeys(x, y+1);
+        if (agent_nav_matrix[x][y+1]){
+            neighbours.add(new Vector2d(x*block_size, (y+1)*block_size));
+            visited.add(keys);
         }
         return;
     }
@@ -314,12 +350,17 @@ public class Agent extends AbstractMultiPlayer {
 
     /* Solution for being able to map two Keys to be able to use vector coordinates as index
     *  Found in StackOverflow: http://stackoverflow.com/a/14678042 */
-    public class Key {
+    public class VectorKeys {
 
-        private final int x;
-        private final int y;
+        private int x;
+        private int y;
 
-        public Key(int x, int y) {
+        public VectorKeys(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public void updateKeys(int x, int y) {
             this.x = x;
             this.y = y;
         }
@@ -327,8 +368,8 @@ public class Agent extends AbstractMultiPlayer {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Key)) return false;
-            Key key = (Key) o;
+            if (!(o instanceof VectorKeys)) return false;
+            VectorKeys key = (VectorKeys) o;
             return x == key.x && y == key.y;
         }
 
@@ -345,20 +386,24 @@ public class Agent extends AbstractMultiPlayer {
         System.out.println("Looking path from "+start+" to "+goal);
 
         PriorityQueue<NodePosition> frontier = new PriorityQueue<>();
-        Map<Vector2d, Vector2d> visited_from = new HashMap<>();
-        Map<Vector2d, Double> cost_so_far = new HashMap<>();
+        Map<VectorKeys, Vector2d> visited_from = new HashMap<>();
+        Map<VectorKeys, Double> cost_so_far = new HashMap<>();
         List<Vector2d> neighbours = new ArrayList<>();
+        List<VectorKeys> visited_neighbours = new ArrayList<>();
 
         NodePosition startNode = new NodePosition(start, 0);
         frontier.add(startNode);
-        visited_from.put(start, null);
-        cost_so_far.put(start, 0.0);
+
+        VectorKeys start_keys = new VectorKeys((int)start.x,(int)start.y);
+        visited_from.put(start_keys, null);
+        cost_so_far.put(start_keys, 0.0);
+
         boolean goal_found = false;
 
         int iterations = 0;
         while(!frontier.isEmpty()){
-            System.out.println(iterations);
             NodePosition currentNode = frontier.poll();
+            //System.out.println(currentNode.position);
             if (currentNode.position.equals(goal)){
                 // GOAL HAS BEEN FOUND YAYYYYYYY
                 goal_found = true;
@@ -367,26 +412,26 @@ public class Agent extends AbstractMultiPlayer {
 
             neighbours.clear();
             getCurrentPositionNeighbours(neighbours, currentNode.position);
-            /*System.out.println();
-            System.out.println("Current: "+currentNode.position);
-            System.out.println("Neighbours: "+neighbours);*/
 
+            VectorKeys currentNode_keys = new VectorKeys((int)currentNode.position.x, (int)currentNode.position.y);
 
             for(int k=0; k < neighbours.size(); k++){
                 Vector2d next = neighbours.get(k);
-                double next_cost = cost_so_far.get(currentNode.position) + 1; // all costs are 1
+                VectorKeys next_keys = new VectorKeys((int)next.x, (int)next.y);
 
-                if (!cost_so_far.containsKey(next) || next_cost < cost_so_far.get(next)){
+                double next_cost = cost_so_far.get(currentNode_keys) + 1; // all costs are 1
+
+                if (!cost_so_far.containsKey(next_keys) || next_cost < cost_so_far.get(next_keys)){
                     NodePosition next_node_pos = new NodePosition(next, next_cost);
 
                     //System.out.println("Pos: "+next_node_pos.position + " cost" + next_node_pos.cost);
 
                     frontier.add(next_node_pos);
-                    visited_from.put(next, currentNode.position);
-                    cost_so_far.put(next, next_cost);
+                    visited_from.put(next_keys, currentNode.position);
+                    cost_so_far.put(next_keys, next_cost);
 
-                    System.out.println(visited_from.size());
-                    System.out.println(cost_so_far.size());
+                    //System.out.println(visited_from.size());
+                    //System.out.println(cost_so_far.size());
 
                     /*if(next.equals(goal)){
                         System.out.println("ENQUEING GOAL: "+next);
@@ -396,35 +441,38 @@ public class Agent extends AbstractMultiPlayer {
                 }
             }
             iterations++;
-            System.out.println();
+            //System.out.println();
         }
 
-        //System.out.println(visited_from);
+        /*System.out.println(visited_from.size());
+        System.out.println(visited_from.size());
+        visited_from.forEach((k,v)->System.out.println("("+k.x+","+k.y+") : "+v));*/
+
 
         // Reconstruct the path
-        /*List<Vector2d> path = null;
+        List<Vector2d> path = null;
         if (goal_found) {
             path = new ArrayList<>();
 
             Vector2d current_pos = goal;
+            VectorKeys current_pos_keys = new VectorKeys((int)current_pos.x, (int)current_pos.y);
 
             while (!current_pos.equals(start)) {
-                System.out.println(current_pos);
-                System.out.println(visited_from);
+
                 path.add(current_pos);
-                System.out.println(visited_from.containsKey(current_pos));
-                current_pos = visited_from.get(current_pos);
-                System.out.println(current_pos);
+
+                current_pos = visited_from.get(current_pos_keys);
+                current_pos_keys.updateKeys((int)current_pos.x, (int)current_pos.y);
+
                 if (path.contains(current_pos)) {
                     System.out.println ("Error: path contains a loop");
-                    return null;
+                    return new ArrayList<>();
                 }
             }
             path.add(start);
             Collections.reverse(path);
         }
 
-        return path;*/
-        return  new ArrayList<>();
+        return path;
     }
 }
