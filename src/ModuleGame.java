@@ -14,9 +14,10 @@ public class ModuleGame {
         String testController = "controllers.aimodule.Test.Agent";
 
         // Tests
+        String randomController = "controllers.multiPlayer.sampleRandom.Agent";
         String sampleGAController = "controllers.multiPlayer.sampleGA.Agent";
 
-        String controllers = humanController + " " + sampleGAController;
+        String controllers = humanController + " " + testController;
 
         // Available games:
         String gamePath = "aimodule/";

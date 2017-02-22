@@ -2,11 +2,11 @@ wwwwwwwwwwwwwwwwwwwwww
 w.......x............w
 w.......x...ww.......w
 w...A...x...ww.......w
-wxxxxxxxwwwwww.......w
+wxxxxxxxwwwwwwxxxxxxxw
 w.......wwwwww.......w
-w.T..............ww..w
-w................wwwww
+w.T........xx....ww..w
+w..........ww....wwwww
 w.........cww....wwwww
-w....................w
-w....................w
+w..........ww........w
+w..........xx........w
 wwwwwwwwwwwwwwwwwwwwww
