@@ -30,6 +30,10 @@ public class Agent extends AbstractMultiPlayer {
     protected int grid_height;
     protected int block_size;
 
+    protected List<Vector2d> path_to_hell = null;
+
+    protected ACTIONS previous_action = ACTIONS.ACTION_NIL;
+
     /**
      * initialize all variables for the agent
      * @param stateObs Observation of the current state.
@@ -146,10 +150,10 @@ public class Agent extends AbstractMultiPlayer {
             }
         }
 
-        System.out.println(areas.get(0));
+        /*System.out.println(areas.get(0));
         System.out.println(areas.get(1));
         System.out.println(areas.get(2));
-        System.out.println(areas.get(3));
+        System.out.println(areas.get(3));*/
     }
 
     /**
@@ -182,6 +186,12 @@ public class Agent extends AbstractMultiPlayer {
         Vector2d cakepos = cake_pieces.get(0).position;
         Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
         Vector2d agentpos = stateObs.getAvatarPosition(id);
+
+        /* A STAR */
+        if (path_to_hell == null){
+            path_to_hell = aStarPath(agentpos, avatarpos);
+            System.out.print(path_to_hell);
+        }
 
         int cakearea = -1;
         int avatararea = -1;
@@ -225,9 +235,17 @@ public class Agent extends AbstractMultiPlayer {
         }
         System.out.println();*/
 
-        ArrayList<ACTIONS> a = stateObs.getAvailableActions(id);
+        /*ArrayList<ACTIONS> a = stateObs.getAvailableActions(id);
         System.out.println(a);
-        return ACTIONS.ACTION_NIL;
+
+        if((previous_action == ACTIONS.ACTION_NIL)||(ACTIONS.isMoving(previous_action))){
+            previous_action = ACTIONS.ACTION_USE;
+            return ACTIONS.ACTION_USE;
+        }
+
+        previous_action = ACTIONS.ACTION_RIGHT;
+        return ACTIONS.ACTION_RIGHT;*/
+        return  ACTIONS.ACTION_NIL;
     }
 
     /**
@@ -250,5 +268,163 @@ public class Agent extends AbstractMultiPlayer {
             }
             System.out.print("); ");
         }else System.out.print(str + ": 0; ");
+    }
+
+    private void getCurrentPositionNeighbours(List<Vector2d> neighbours, Vector2d c_pos){
+        int x = (int)c_pos.x / block_size;
+        int y = (int)c_pos.y / block_size;
+
+        // NOTE: It is assumed that every map is surrounded by walls so there is no chance of going 'out of bounds' and
+        // therefore no need to check if i-1, i+1, j-1 or j+1 is out of bounds
+        if (agent_nav_matrix[x-1][y]){
+            neighbours.add(new Vector2d((x-1)*block_size, y*block_size));
+        }
+        if (agent_nav_matrix[x+1][y]){
+            neighbours.add(new Vector2d((x+1)*block_size, y*block_size));
+        }
+        if (agent_nav_matrix[x][y-1]){
+            neighbours.add(new Vector2d(x*block_size, (y-1)*block_size));
+        }
+        if (agent_nav_matrix[x][y+1]){
+            neighbours.add(new Vector2d(x*block_size, (y+1)*block_size));
+        }
+        return;
+    }
+
+    private class NodePosition implements Comparable<NodePosition>{
+        public Vector2d position;
+        public double cost;
+
+        public NodePosition(Vector2d position, double cost){
+            this.position = position;
+            this.cost = cost;
+        }
+
+        @Override
+        public int compareTo(NodePosition o) {
+            if (this.cost < o.cost){
+                return -1;
+            }
+            if (this.cost > o.cost){
+                return 1;
+            }
+            return 0;
+        }
+    }
+
+    /* Solution for being able to map two Keys to be able to use vector coordinates as index
+    *  Found in StackOverflow: http://stackoverflow.com/a/14678042 */
+    public class Key {
+
+        private final int x;
+        private final int y;
+
+        public Key(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Key)) return false;
+            Key key = (Key) o;
+            return x == key.x && y == key.y;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = x;
+            result = 31 * result + y;
+            return result;
+        }
+
+    }
+
+    private List<Vector2d> aStarPath(Vector2d start, Vector2d goal){
+        System.out.println("Looking path from "+start+" to "+goal);
+
+        PriorityQueue<NodePosition> frontier = new PriorityQueue<>();
+        Map<Vector2d, Vector2d> visited_from = new HashMap<>();
+        Map<Vector2d, Double> cost_so_far = new HashMap<>();
+        List<Vector2d> neighbours = new ArrayList<>();
+
+        NodePosition startNode = new NodePosition(start, 0);
+        frontier.add(startNode);
+        visited_from.put(start, null);
+        cost_so_far.put(start, 0.0);
+        boolean goal_found = false;
+
+        int iterations = 0;
+        while(!frontier.isEmpty()){
+            System.out.println(iterations);
+            NodePosition currentNode = frontier.poll();
+            if (currentNode.position.equals(goal)){
+                // GOAL HAS BEEN FOUND YAYYYYYYY
+                goal_found = true;
+                break;
+            }
+
+            neighbours.clear();
+            getCurrentPositionNeighbours(neighbours, currentNode.position);
+            /*System.out.println();
+            System.out.println("Current: "+currentNode.position);
+            System.out.println("Neighbours: "+neighbours);*/
+
+
+            for(int k=0; k < neighbours.size(); k++){
+                Vector2d next = neighbours.get(k);
+                double next_cost = cost_so_far.get(currentNode.position) + 1; // all costs are 1
+
+                if (!cost_so_far.containsKey(next) || next_cost < cost_so_far.get(next)){
+                    NodePosition next_node_pos = new NodePosition(next, next_cost);
+
+                    //System.out.println("Pos: "+next_node_pos.position + " cost" + next_node_pos.cost);
+
+                    frontier.add(next_node_pos);
+                    visited_from.put(next, currentNode.position);
+                    cost_so_far.put(next, next_cost);
+
+                    System.out.println(visited_from.size());
+                    System.out.println(cost_so_far.size());
+
+                    /*if(next.equals(goal)){
+                        System.out.println("ENQUEING GOAL: "+next);
+                        System.out.println(visited_from.get(next));
+                        System.out.println(visited_from.size());
+                    }*/
+                }
+            }
+            iterations++;
+            System.out.println();
+        }
+
+        //System.out.println(visited_from);
+
+        // Reconstruct the path
+        /*List<Vector2d> path = null;
+        if (goal_found) {
+            path = new ArrayList<>();
+
+            Vector2d current_pos = goal;
+
+            while (!current_pos.equals(start)) {
+                System.out.println(current_pos);
+                System.out.println(visited_from);
+                path.add(current_pos);
+                System.out.println(visited_from.containsKey(current_pos));
+                current_pos = visited_from.get(current_pos);
+                System.out.println(current_pos);
+                if (path.contains(current_pos)) {
+                    System.out.println ("Error: path contains a loop");
+                    return null;
+                }
+            }
+            path.add(start);
+            Collections.reverse(path);
+        }
+
+        return path;*/
+        return  new ArrayList<>();
     }
 }
