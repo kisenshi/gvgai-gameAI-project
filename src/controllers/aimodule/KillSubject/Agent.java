@@ -238,6 +238,13 @@ public class Agent extends AbstractMultiPlayer {
 
         // It is retrieved the actions needed to reach the path
         if (actions_list == null || actions_list.isEmpty()) {
+
+            List<Vector2d> vision_path_to_avatar = getVisionPathToAvatar(avatarpos);
+
+            System.out.println(avatarpos);
+            System.out.println(vision_path_to_avatar);
+            System.out.println();
+
             actions_list = getActionsToReachPosition(agentpos, avatarpos, agentorientation);
             // When the position is reached, SHOOT
             actions_list.addAll(shoot());
@@ -296,6 +303,65 @@ public class Agent extends AbstractMultiPlayer {
     }
 
     /**
+     * WORLD STATE CHECK
+     * Functions that allow the agent to check the world status and decide how to act depending on it
+     */
+
+    private List<Vector2d> getVisionPathToAvatar(Vector2d avatarpos){
+        // In every direction, it is checked if the tales are in the agent space and include them in the vision path
+        // to avatar positions
+        List<Vector2d> vision_to_avatar_list = new ArrayList<>();
+
+        int x = (int)avatarpos.x / block_size;
+        int y = (int)avatarpos.y / block_size;
+
+        int d = 1; // The distance from the avatar to check
+        boolean checkR = true, checkL = true, checkU = true, checkD = true;
+        while (checkR || checkL || checkU || checkD){
+            System.out.println(d);
+            // Right vision positions
+            if (checkR){
+                if (agent_nav_matrix[x + d][y]){
+                    vision_to_avatar_list.add(new Vector2d((x + d)*block_size, y*block_size));
+                } else {
+                    // End of vision to the right reached
+                    checkR = false;
+                }
+            }
+            // Left vision positions
+            if (checkL){
+                if (agent_nav_matrix[x - d][y]){
+                    vision_to_avatar_list.add(new Vector2d((x - d)*block_size, y*block_size));
+                } else {
+                    // End of vision to the left reached
+                    checkL = false;
+                }
+            }
+            // Up vision position
+            if (checkU){
+                if (agent_nav_matrix[x][y - d]){
+                    vision_to_avatar_list.add(new Vector2d(x*block_size, (y - d)*block_size));
+                } else {
+                    // End of vision up reached
+                    checkU = false;
+                }
+            }
+            // Down vision position
+            if (checkD){
+                if (agent_nav_matrix[x][y + d]){
+                    vision_to_avatar_list.add(new Vector2d(x*block_size, (y + d)*block_size));
+                } else {
+                    // End of vision down reached
+                    checkD = false;
+                }
+            }
+            d++;
+        }
+
+        return vision_to_avatar_list;
+    }
+
+    /**
      * AGENT POSSIBLE ACTIONS
      * It si defined the list of different actions the agent would be able to carry out combining the actions available
      */
@@ -306,12 +372,13 @@ public class Agent extends AbstractMultiPlayer {
         return actions_queue;
     }
 
-    private Queue<ACTIONS> shootInCertainDirection(){
+    private Queue<ACTIONS> shootInCertainDirection(Vector2d orientation){
         Queue<ACTIONS> actions_queue =  new LinkedList<>();
         actions_queue.add(ACTIONS.ACTION_NIL);
         return actions_queue;
     }
 
+    /* */
     private ACTIONS carryOutNextAction(Queue<ACTIONS> actions_queue){
         if (actions_queue.isEmpty()){
             return ACTIONS.ACTION_NIL;
@@ -320,6 +387,7 @@ public class Agent extends AbstractMultiPlayer {
         return actions_queue.poll();
     }
 
+    /* Return the action to move in the desired direction */
     private ACTIONS move(Vector2d orientation){
         Vector2d VECTOR_UP = new Vector2d(0, -1);
         Vector2d VECTOR_DOWN = new Vector2d(0, 1);
@@ -342,28 +410,12 @@ public class Agent extends AbstractMultiPlayer {
         return ACTIONS.ACTION_NIL;
     }
 
+    /* Returns the action to change the orientation to be able to perform actions in that direction
+     * Basically is the same as moving but makes it easier to declare a new function to make calls based
+     * on the desired behaviour
+     * */
     private ACTIONS changeOrientation(Vector2d needed_orientation){
         return move(needed_orientation);
-    }
-
-    private Vector2d getAdjacentAgentSpace(int x, int y){
-        if (agent_nav_matrix[x-1][y]){
-            return new Vector2d((x-1)*block_size, y*block_size);
-        }
-
-        if (agent_nav_matrix[x+1][y]){
-            return new Vector2d((x+1)*block_size, y*block_size);
-        }
-
-        if (agent_nav_matrix[x][y-1]){
-            return new Vector2d(x*block_size, (y-1)*block_size);
-        }
-
-        if (agent_nav_matrix[x][y+1]){
-            return new Vector2d(x*block_size, (y+1)*block_size);
-        }
-
-        return null;
     }
 
     private Queue<ACTIONS> getActionsToReachPosition(Vector2d start, Vector2d goal, Vector2d start_orientation){
@@ -375,7 +427,7 @@ public class Agent extends AbstractMultiPlayer {
         }
 
         List<Vector2d> path = aStarPath(start, goal);
-        System.out.println(path);
+        //System.out.println(path);
 
         if (path.isEmpty()){
             actions_queue.add(ACTIONS.ACTION_NIL);
@@ -404,6 +456,11 @@ public class Agent extends AbstractMultiPlayer {
 
         return actions_queue;
     }
+
+    /**
+     * PATHFINDING
+     * AStar implementation & needed helper classes and functions
+     * */
 
     /* Fills the neighbours list with the reachable positions from the current one
      * It is checked TOP, RIGHT, DOWN and LEFT as it is not possible to move in diagonal */
@@ -567,6 +624,11 @@ public class Agent extends AbstractMultiPlayer {
 
         return path;
     }
+
+
+    /**
+     * DEBUG
+     */
 
     /**
      * Prints the number of different types of sprites available in the "positions" array.
