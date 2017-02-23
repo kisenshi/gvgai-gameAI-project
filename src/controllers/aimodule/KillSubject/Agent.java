@@ -23,7 +23,7 @@ public class Agent extends AbstractMultiPlayer {
     int CAKE_ID = 3;
 
     protected ArrayList<Observation> grid[][];
-    protected List<ArrayList<Vector2d>> areas = new ArrayList<ArrayList<Vector2d>>();
+    protected List<ArrayList<Vector2d>> areas = new ArrayList<>();
 
     protected boolean agent_nav_matrix[][];
     protected int grid_width;
@@ -43,7 +43,7 @@ public class Agent extends AbstractMultiPlayer {
     public Agent(StateObservationMulti stateObs, ElapsedCpuTimer elapsedTimer, int playerID){
         id = playerID; //player ID of this agent
         opp_id = (playerID + 1) % 2; // player ID of the opponent. We know that there are only 2 players in the game
-        block_size = stateObs.getBlockSize();
+        block_size = stateObs.getBlockSize(); // useful to consider the map as coordinates for different calculations
 
         // Gets floor and traps + floor
         Dimension grid_dimension = stateObs.getWorldDimension();
@@ -54,6 +54,8 @@ public class Agent extends AbstractMultiPlayer {
         ArrayList<Observation> floor_elements = fixedPositions[FLOOR_ID];
         ArrayList<Observation> traps_elements = fixedPositions[TRAP_ID];
 
+        // It is initialise a floor matrix to be able to distinguish between different areas
+        // And the agent_nav_matrix that will be used to create the navigation graph on the flow when using the pathfinding algorithm
         boolean floor_matrix[][] = new boolean[grid_width][grid_height];
         agent_nav_matrix = new boolean[grid_width][grid_height];
 
@@ -80,9 +82,10 @@ public class Agent extends AbstractMultiPlayer {
         }*/
 
 
+        // To obtain the different areas a stack will be used in the logic to push every tale that belongs to each area
+        // for being connected
         Stack area_element_st = new Stack<Vector2d>();
 
-        // Go over the grid to initialise different elements that will be useful for the algorithm
         // NOTE: It is assumed that every map is surrounded by walls so there is no chance of going 'out of bounds' and therefore no need to check if i-1, i+1, j-1 or j+1 is out of bounds
         for (int i = 0; i < grid_width; i++) {
             for (int j = 0; j < grid_height; j++){
@@ -90,7 +93,7 @@ public class Agent extends AbstractMultiPlayer {
                 /* -------------------------------------------- AREAS CALCULATION ------------------------------------------------------------ */
 
                 if (floor_matrix[i][j]) {
-                    ArrayList<Vector2d> current_area_positions = new ArrayList<Vector2d>();
+                    ArrayList<Vector2d> current_area_positions = new ArrayList<>();
                     current_area_positions.add(new Vector2d(i * block_size, j * block_size));
 
                     // Check neighbours and add them to the stack to be visited and they are marked as false to avoid check them again
@@ -112,6 +115,8 @@ public class Agent extends AbstractMultiPlayer {
                     }
 
                     while(!area_element_st.empty()){
+                        // While there are elements in the stack we are considering floor belonging to the same area,
+                        // so the algorithm should continue
                         Vector2d current_area_position = (Vector2d)area_element_st.pop();
 
                         int current_i = (int)current_area_position.x;
@@ -136,12 +141,9 @@ public class Agent extends AbstractMultiPlayer {
 
                         current_area_position.x *= block_size;
                         current_area_position.y *= block_size;
-                        //System.out.print("("+current_area_position.x/block_size+","+current_area_position.y/block_size+")");
+
                         current_area_positions.add(current_area_position);
-
-
                     }
-                    //System.out.println();
                     areas.add(current_area_positions);
                 }
 
@@ -182,8 +184,8 @@ public class Agent extends AbstractMultiPlayer {
         ArrayList<Observation>[] fixedPositions = stateObs.getImmovablePositions();
         ArrayList<Observation> cake_pieces = fixedPositions[CAKE_ID];
 
-        // JUST 1 CAKE ATM
-        Vector2d cakepos = cake_pieces.get(0).position;
+        // It is obtained current positions for players and the cake
+        Vector2d cakepos = cake_pieces.get(0).position; // Just 1 cake at the moment
         Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
         Vector2d agentpos = stateObs.getAvatarPosition(id);
 
@@ -244,6 +246,7 @@ public class Agent extends AbstractMultiPlayer {
 
         previous_action = ACTIONS.ACTION_RIGHT;
         return ACTIONS.ACTION_RIGHT;*/
+
         return  ACTIONS.ACTION_NIL;
     }
 
