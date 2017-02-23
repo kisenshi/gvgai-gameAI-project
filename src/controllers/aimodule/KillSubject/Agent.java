@@ -1,5 +1,6 @@
 package controllers.aimodule.KillSubject;
 
+import com.sun.deploy.util.SyncAccess;
 import core.game.Observation;
 import core.game.StateObservationMulti;
 import core.player.AbstractMultiPlayer;
@@ -32,6 +33,8 @@ public class Agent extends AbstractMultiPlayer {
 
     private Queue<ACTIONS> actions_list = null;
     private boolean deployed = false;
+
+    private int lastAvatarArea;
 
     protected CurrentPlan plan;
 
@@ -79,8 +82,6 @@ public class Agent extends AbstractMultiPlayer {
         id = playerID; //player ID of this agent
         opp_id = (playerID + 1) % 2; // player ID of the opponent. We know that there are only 2 players in the game
         block_size = stateObs.getBlockSize(); // useful to consider the map as coordinates for different calculations
-
-        plan = new CurrentPlan(null,-1);
 
         // Gets floor and traps + floor
         Dimension grid_dimension = stateObs.getWorldDimension();
@@ -189,6 +190,10 @@ public class Agent extends AbstractMultiPlayer {
             }
         }
 
+        // It is initialise the area where the avatar is located
+        Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
+        lastAvatarArea = getAreaLocated(avatarpos);
+
         /*System.out.println(areas.get(0));
         System.out.println(areas.get(1));
         System.out.println(areas.get(2));
@@ -203,20 +208,6 @@ public class Agent extends AbstractMultiPlayer {
      */
     @Override
     public ACTIONS act(StateObservationMulti stateObs, ElapsedCpuTimer elapsedTimer) {
-        // DEBUGING TO NOW WHAT WE HAVE AVAILABLE
-
-        /*ArrayList<Observation>[] fixedPositions = stateObs.getImmovablePositions();
-        ArrayList<Observation>[] movingPositions = stateObs.getMovablePositions();
-        ArrayList<Observation>[] resourcesPositions = stateObs.getResourcesPositions();
-        ArrayList<Observation>[] portalPositions = stateObs.getPortalsPositions();
-
-        grid = stateObs.getObservationGrid();
-
-        printDebug(fixedPositions,"fix");
-        printDebug(movingPositions,"mov");
-        printDebug(resourcesPositions,"res");
-        printDebug(portalPositions,"por");
-        System.out.println();*/
 
         ArrayList<Observation>[] fixedPositions = stateObs.getImmovablePositions();
         ArrayList<Observation> cake_pieces = fixedPositions[CAKE_ID];
@@ -227,11 +218,6 @@ public class Agent extends AbstractMultiPlayer {
         Vector2d agentpos = stateObs.getAvatarPosition(id);
 
         Vector2d agentorientation = stateObs.getAvatarOrientation(id);
-        Vector2d avatarOrientation = stateObs.getAvatarOrientation(opp_id);
-
-        /*System.out.println(avatarpos);
-        System.out.println(avatarOrientation);
-        System.out.println();*/
 
         List<Vector2d> vision_path_to_avatar = getVisionPathToAvatar(avatarpos);
 
@@ -245,15 +231,15 @@ public class Agent extends AbstractMultiPlayer {
             if (!deployed){
                 System.out.println("DEPLOYING");
                 actions_list.clear();
-                actions_list.addAll(slowDown(3));
+                actions_list.addAll(slowDown(4));
                 actions_list.addAll(shootAvatar(agentpos, avatarpos, agentorientation));
                 deployed = true;
             }
         } else {
             // IS ANYONE THERE?
             deployed = false;
-            // It there are actions planned to carry out, no search is made
-            if (actions_list == null || actions_list.isEmpty()) {
+            // It there are actions planned to carry out, no search is made unless the avatar has changed their area
+            if (actions_list == null || actions_list.isEmpty() || hasAvatarChangedArea(avatarpos)) {
                 System.out.println("IS ANYONE THERE?");
                 // Looks for the closest spot to shoot the subject 0.0
                 Vector2d best_spot = getBestSpotToShootAvatar(agentpos, vision_path_to_avatar);
@@ -261,12 +247,14 @@ public class Agent extends AbstractMultiPlayer {
             }
         }
 
+        //System.out.println("Changed?? "+hasAvatarChangedArea(avatarpos));
+        lastAvatarArea = getAreaLocated(avatarpos);
 
-        int cakearea = -1;
+        /*int cakearea = -1;
         int avatararea = -1;
         int agentarea = -1;
 
-        /* In which area is each element? */
+        // In which area is each element?
         for (int k=0; k < areas.size(); k++){
             ArrayList c_area = areas.get(k);
             if ((cakearea == -1)&&(c_area.contains(cakepos))){
@@ -278,7 +266,7 @@ public class Agent extends AbstractMultiPlayer {
             if ((agentarea == -1)&&(c_area.contains(agentpos))){
                 agentarea = k;
             }
-        }
+        }*/
 
         /*System.out.println();
         System.out.print("DISTRIBUTION: cake: "+cakearea+"avatar: "+avatararea+"agent: "+agentarea);
@@ -327,6 +315,29 @@ public class Agent extends AbstractMultiPlayer {
             return true;
         }
         return false;
+    }
+
+    private int getAreaLocated(Vector2d location){
+        int area = -1;
+
+        for (int k=0; k < areas.size(); k++){
+            ArrayList c_area = areas.get(k);
+
+            if (c_area.contains(location)){
+                area = k;
+                break;
+            }
+        }
+
+        return area;
+    }
+
+    private boolean hasAvatarChangedArea(Vector2d avatarpos){
+        // Checks if the avatar has changed the area since the last tick
+        int avatararea = getAreaLocated(avatarpos);
+
+        // Has the avatar changed the area since last tick?
+        return (lastAvatarArea != avatararea);
     }
 
     private boolean isAvatarInSight(List<Vector2d> avatar_in_sight_positions, Vector2d position){

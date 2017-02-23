@@ -46,9 +46,9 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
 
         # To avoid infinite teleportation the exit portal is disabled during a small period of time
         subject portalBlue > transformToAll stype=portalOrange stypeTo=portalOrangeDisabled
-        subject portalBlue > addTimer timer=50 ftype=transformToAll stype=portalOrangeDisabled stypeTo=portalOrange
+        subject portalBlue > addTimer timer=35 ftype=transformToAll stype=portalOrangeDisabled stypeTo=portalOrange
         subject portalOrange > transformToAll stype=portalBlue stypeTo=portalBlueDisabled
-        subject portalOrange > addTimer timer=50 ftype=transformToAll stype=portalBlueDisabled stypeTo=portalBlue
+        subject portalOrange > addTimer timer=35 ftype=transformToAll stype=portalBlueDisabled stypeTo=portalBlue
 
         # If the portal is enabled, Chell is teleported to the other one
         subject workingPortal > teleportToExit
