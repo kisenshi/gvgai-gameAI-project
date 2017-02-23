@@ -36,41 +36,7 @@ public class Agent extends AbstractMultiPlayer {
 
     private int lastAvatarArea;
 
-    protected CurrentPlan plan;
-
-    private class CurrentPlan{
-        private Queue<ACTIONS> actions;
-        private double utility;
-        private ACTIONS last_action;
-
-        public CurrentPlan(Queue<ACTIONS> actions, double utility){
-            this.actions = actions;
-            this.utility = utility;
-            this.last_action = null;
-        }
-
-        public void updatePlan(Queue<ACTIONS> new_actions, double new_utility){
-            this.actions = new_actions;
-            this.utility = new_utility;
-        }
-
-        public boolean isNewPlanBetter(double new_utility){
-            if(new_utility > utility){
-                return true;
-            }
-            return false;
-        }
-
-        public boolean isThereCurrentPlan(){
-            return !actions.isEmpty();
-        }
-
-        public ACTIONS executeNextAction(){
-            ACTIONS next_action = actions.poll();
-            last_action = next_action;
-            return next_action;
-        }
-    }
+    private List<Vector2d> cake_positions = new ArrayList<>();
 
     /**
      * initialize all variables for the agent
@@ -91,6 +57,7 @@ public class Agent extends AbstractMultiPlayer {
         ArrayList<Observation>[] fixedPositions = stateObs.getImmovablePositions();
         ArrayList<Observation> floor_elements = fixedPositions[FLOOR_ID];
         ArrayList<Observation> traps_elements = fixedPositions[TRAP_ID];
+        ArrayList<Observation> cake_elements = fixedPositions[CAKE_ID];
 
         // It is initialise a floor matrix to be able to distinguish between different areas
         // And the agent_nav_matrix that will be used to create the navigation graph on the flow when using the pathfinding algorithm
@@ -111,14 +78,10 @@ public class Agent extends AbstractMultiPlayer {
             agent_nav_matrix[(int)trap_position.x / block_size][(int)trap_position.y / block_size] = true;
         }
 
-        //TEST
-        /*for (int i = 0; i < grid_dimension.width / block_size; i++){
-            for (int j = 0; j < grid_dimension.height / block_size; j++){
-                System.out.print(floor_matrix[i][j] + " ");
-            }
-            System.out.println();
-        }*/
-
+        for (int k = 0; k < cake_elements.size(); k++){
+            Vector2d cake_position = cake_elements.get(k).position;
+            cake_positions.add(cake_position);
+        }
 
         // To obtain the different areas a stack will be used in the logic to push every tale that belongs to each area
         // for being connected
@@ -127,9 +90,7 @@ public class Agent extends AbstractMultiPlayer {
         // NOTE: It is assumed that every map is surrounded by walls so there is no chance of going 'out of bounds' and therefore no need to check if i-1, i+1, j-1 or j+1 is out of bounds
         for (int i = 0; i < grid_width; i++) {
             for (int j = 0; j < grid_height; j++){
-
                 /* -------------------------------------------- AREAS CALCULATION ------------------------------------------------------------ */
-
                 if (floor_matrix[i][j]) {
                     ArrayList<Vector2d> current_area_positions = new ArrayList<>();
                     current_area_positions.add(new Vector2d(i * block_size, j * block_size));
@@ -184,20 +145,13 @@ public class Agent extends AbstractMultiPlayer {
                     }
                     areas.add(current_area_positions);
                 }
-
                 /* ------------------------------------------------------------------------------------------------------------------------- */
-
             }
         }
 
         // It is initialise the area where the avatar is located
         Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
         lastAvatarArea = getAreaLocated(avatarpos);
-
-        /*System.out.println(areas.get(0));
-        System.out.println(areas.get(1));
-        System.out.println(areas.get(2));
-        System.out.println(areas.get(3));*/
     }
 
     /**
@@ -210,10 +164,8 @@ public class Agent extends AbstractMultiPlayer {
     public ACTIONS act(StateObservationMulti stateObs, ElapsedCpuTimer elapsedTimer) {
 
         ArrayList<Observation>[] fixedPositions = stateObs.getImmovablePositions();
-        ArrayList<Observation> cake_pieces = fixedPositions[CAKE_ID];
 
         // It is obtained current positions for players and the cake
-        Vector2d cakepos = cake_pieces.get(0).position; // Just 1 cake at the moment
         Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
         Vector2d agentpos = stateObs.getAvatarPosition(id);
 
@@ -350,10 +302,13 @@ public class Agent extends AbstractMultiPlayer {
         double spot_dist = 0;
         for (int i=0; i < avatar_in_sight_positions.size(); i++){
             Vector2d position = avatar_in_sight_positions.get(i);
-            spot_dist = agentpos.dist(position);
-            if (spot_dist < best_dist){
-                best_dist = spot_dist;
-                best_position = position;
+            if (!cake_positions.contains(position)) {
+                // The cake position is not a reachable position for the agent so remove it from the available positions
+                spot_dist = agentpos.dist(position);
+                if (spot_dist < best_dist) {
+                    best_dist = spot_dist;
+                    best_position = position;
+                }
             }
         }
 
