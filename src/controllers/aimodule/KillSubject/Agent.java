@@ -235,25 +235,26 @@ public class Agent extends AbstractMultiPlayer {
         System.out.println(avatarOrientation);
         System.out.println();*/
 
+        List<Vector2d> vision_path_to_avatar = getVisionPathToAvatar(avatarpos);
 
-        // It is retrieved the actions needed to reach the path
-        if (actions_list == null || actions_list.isEmpty()) {
+        // If the avatar is in sight it is high priority and we should shoot
+        // It does not matter if there were something else planned
+        if (isAvatarInSight(vision_path_to_avatar, agentpos)){
+            // DEPLOYING!!!!
+            System.out.println("DEPLOYING");
+            actions_list = shootAvatar(agentpos, avatarpos, agentorientation);
+        } else {
+            // IS ANYONE THERE?
+            // Looks for the closest spot to shoot the subject 0.0
+            System.out.println("IS ANYONE THERE?");
 
-            List<Vector2d> vision_path_to_avatar = getVisionPathToAvatar(avatarpos);
-            if (isAvatarInSight(vision_path_to_avatar, agentpos)){
-                System.out.println("DEPLOYING");
-            } else {
-                System.out.println("IS ANYONE THERE?");
+            // It there are actions planned to carry out, no search is made
+            if (actions_list == null || actions_list.isEmpty()) {
+                Vector2d best_spot = getBestSpotToShootAvatar(agentpos, vision_path_to_avatar);
+                actions_list = getActionsToReachPosition(agentpos, best_spot, agentorientation);
             }
-            System.out.println(avatarpos);
-            System.out.println(vision_path_to_avatar);
-            System.out.println();
-
-            actions_list = getActionsToReachPosition(agentpos, avatarpos, agentorientation);
-            // When the position is reached, SHOOT
-            //actions_list.addAll(shoot());
-
         }
+
 
         int cakearea = -1;
         int avatararea = -1;
@@ -319,12 +320,27 @@ public class Agent extends AbstractMultiPlayer {
         if ((y < 0) || (y >= grid_height)){
             return true;
         }
-
         return false;
     }
 
     private boolean isAvatarInSight(List<Vector2d> avatar_in_sight_positions, Vector2d position){
         return avatar_in_sight_positions.contains(position);
+    }
+
+    private Vector2d getBestSpotToShootAvatar(Vector2d agentpos, List<Vector2d> avatar_in_sight_positions){
+        Vector2d best_position = new Vector2d(0,0);
+        double best_dist = 1000000000;
+        double spot_dist = 0;
+        for (int i=0; i < avatar_in_sight_positions.size(); i++){
+            Vector2d position = avatar_in_sight_positions.get(i);
+            spot_dist = agentpos.dist(position);
+            if (spot_dist < best_dist){
+                best_dist = spot_dist;
+                best_position = position;
+            }
+        }
+
+        return best_position;
     }
 
     private List<Vector2d> getVisionPathToAvatar(Vector2d avatarpos){
@@ -394,25 +410,29 @@ public class Agent extends AbstractMultiPlayer {
      * It si defined the list of different actions the agent would be able to carry out combining the actions available
      */
 
-    private Queue<ACTIONS> shoot(){
-        Queue<ACTIONS> actions_queue =  new LinkedList<>();
-        actions_queue.add(ACTIONS.ACTION_USE);
-        return actions_queue;
-    }
+    /**
+     * SINGLE ACTIONS
+     * */
 
-    private Queue<ACTIONS> shootInCertainDirection(Vector2d orientation){
-        Queue<ACTIONS> actions_queue =  new LinkedList<>();
-        actions_queue.add(ACTIONS.ACTION_NIL);
-        return actions_queue;
-    }
-
-    /* */
-    private ACTIONS carryOutNextAction(Queue<ACTIONS> actions_queue){
-        if (actions_queue.isEmpty()){
+    private ACTIONS carryOutNextAction(Queue<ACTIONS> actions_queue) {
+        if (actions_queue.isEmpty()) {
             return ACTIONS.ACTION_NIL;
         }
 
         return actions_queue.poll();
+    }
+
+    private ACTIONS shoot(){
+        return ACTIONS.ACTION_USE;
+    }
+
+    private List<ACTIONS> slowDown(){
+        List<ACTIONS> slow_down_actions = new ArrayList<>();
+        for (int i=0; i < 9; i++){
+            slow_down_actions.add(ACTIONS.ACTION_NIL);
+        }
+
+        return slow_down_actions;
     }
 
     /* Return the action to move in the desired direction */
@@ -444,6 +464,28 @@ public class Agent extends AbstractMultiPlayer {
      * */
     private ACTIONS changeOrientation(Vector2d needed_orientation){
         return move(needed_orientation);
+    }
+
+    /**
+     * QUEUE OF ACTIONS
+     * */
+
+    private Queue<ACTIONS> shootAvatar(Vector2d agentpos, Vector2d avatarpos, Vector2d agentorientation){
+        Queue<ACTIONS> actions_queue =  new LinkedList<>();
+
+        // It is needed to shoot in the direction of the avatar if not what point on this?
+        Vector2d needed_orientation = new Vector2d(avatarpos.x - agentpos.x, avatarpos.y - agentpos.y);
+        needed_orientation.normalise();
+
+        if (!agentorientation.equals(needed_orientation)){
+            // If the agent is not facing the avatar, needs to change the orientation
+            actions_queue.add(changeOrientation(needed_orientation));
+        }
+
+        // SHOOT!
+        actions_queue.add(shoot());
+
+        return actions_queue;
     }
 
     private Queue<ACTIONS> getActionsToReachPosition(Vector2d start, Vector2d goal, Vector2d start_orientation){
@@ -479,6 +521,7 @@ public class Agent extends AbstractMultiPlayer {
 
             // Move
             actions_queue.add(move(current_orientation));
+            actions_queue.addAll(slowDown());
             current_pos = next_pos;
         }
 
