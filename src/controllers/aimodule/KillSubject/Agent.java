@@ -30,9 +30,46 @@ public class Agent extends AbstractMultiPlayer {
     protected int grid_height;
     protected int block_size;
 
+    //TEST
     protected List<Vector2d> path_to_hell = null;
+    private Queue<ACTIONS> actions_list = null;
+    //
 
-    protected ACTIONS previous_action = ACTIONS.ACTION_NIL;
+    protected CurrentPlan plan;
+
+    private class CurrentPlan{
+        private Queue<ACTIONS> actions;
+        private double utility;
+        private ACTIONS last_action;
+
+        public CurrentPlan(Queue<ACTIONS> actions, double utility){
+            this.actions = actions;
+            this.utility = utility;
+            this.last_action = null;
+        }
+
+        public void updatePlan(Queue<ACTIONS> new_actions, double new_utility){
+            this.actions = new_actions;
+            this.utility = new_utility;
+        }
+
+        public boolean isNewPlanBetter(double new_utility){
+            if(new_utility > utility){
+                return true;
+            }
+            return false;
+        }
+
+        public boolean isThereCurrentPlan(){
+            return !actions.isEmpty();
+        }
+
+        public ACTIONS executeNextAction(){
+            ACTIONS next_action = actions.poll();
+            last_action = next_action;
+            return next_action;
+        }
+    }
 
     /**
      * initialize all variables for the agent
@@ -44,6 +81,8 @@ public class Agent extends AbstractMultiPlayer {
         id = playerID; //player ID of this agent
         opp_id = (playerID + 1) % 2; // player ID of the opponent. We know that there are only 2 players in the game
         block_size = stateObs.getBlockSize(); // useful to consider the map as coordinates for different calculations
+
+        plan = new CurrentPlan(null,-1);
 
         // Gets floor and traps + floor
         Dimension grid_dimension = stateObs.getWorldDimension();
@@ -189,10 +228,19 @@ public class Agent extends AbstractMultiPlayer {
         Vector2d avatarpos = stateObs.getAvatarPosition(opp_id);
         Vector2d agentpos = stateObs.getAvatarPosition(id);
 
-        /* A STAR */
-        if (path_to_hell == null){
-            path_to_hell = aStarPath(agentpos, avatarpos);
-            System.out.print(path_to_hell);
+        Vector2d agentorientation = stateObs.getAvatarOrientation(id);
+        Vector2d avatarOrientation = stateObs.getAvatarOrientation(opp_id);
+
+        /*System.out.println(avatarpos);
+        System.out.println(avatarOrientation);
+        System.out.println();*/
+
+
+        // It is retrieved the actions needed to reach the path
+        if (actions_list == null || actions_list.isEmpty()) {
+            actions_list = getActionsToReachPosition(agentpos, avatarpos, agentorientation);
+            // When the position is reached, SHOOT
+            actions_list.addAll(shoot());
         }
 
         int cakearea = -1;
@@ -242,34 +290,119 @@ public class Agent extends AbstractMultiPlayer {
         if((previous_action == ACTIONS.ACTION_NIL)||(ACTIONS.isMoving(previous_action))){
             previous_action = ACTIONS.ACTION_USE;
             return ACTIONS.ACTION_USE;
-        }
+        }*/
 
-        previous_action = ACTIONS.ACTION_RIGHT;
-        return ACTIONS.ACTION_RIGHT;*/
-
-        return  ACTIONS.ACTION_NIL;
+        return carryOutNextAction(actions_list);
     }
 
     /**
-     * Prints the number of different types of sprites available in the "positions" array.
-     * Between brackets, the number of observations of each type.
-     * @param positions array with observations.
-     * @param str identifier to print
+     * AGENT POSSIBLE ACTIONS
+     * It si defined the list of different actions the agent would be able to carry out combining the actions available
      */
-    private void printDebug(ArrayList<Observation>[] positions, String str)
-    {
-        if(positions != null){
-            System.out.print(str + ":" + positions.length + "(");
-            for (int i = 0; i < positions.length; i++) {
-                System.out.print(positions[i].size() + ",");
-                for (int j=0; j < positions[i].size(); j++) {
-                    Vector2d obs = positions[i].get(j).position;
-                    /*System.out.print(obs.x + " " + obs.y);
-                    System.out.println();*/
-                }
+
+    private Queue<ACTIONS> shoot(){
+        Queue<ACTIONS> actions_queue =  new LinkedList<>();
+        actions_queue.add(ACTIONS.ACTION_USE);
+        return actions_queue;
+    }
+
+    private Queue<ACTIONS> shootInCertainDirection(){
+        Queue<ACTIONS> actions_queue =  new LinkedList<>();
+        actions_queue.add(ACTIONS.ACTION_NIL);
+        return actions_queue;
+    }
+
+    private ACTIONS carryOutNextAction(Queue<ACTIONS> actions_queue){
+        if (actions_queue.isEmpty()){
+            return ACTIONS.ACTION_NIL;
+        }
+
+        return actions_queue.poll();
+    }
+
+    private ACTIONS move(Vector2d orientation){
+        Vector2d VECTOR_UP = new Vector2d(0, -1);
+        Vector2d VECTOR_DOWN = new Vector2d(0, 1);
+        Vector2d VECTOR_RIGHT = new Vector2d(1, 0);
+        Vector2d VECTOR_LEFT = new Vector2d(-1, 0);
+
+        if (orientation.equals(VECTOR_UP)){
+            return ACTIONS.ACTION_UP;
+        }
+        if (orientation.equals(VECTOR_DOWN)){
+            return ACTIONS.ACTION_DOWN;
+        }
+        if (orientation.equals(VECTOR_RIGHT)){
+            return ACTIONS.ACTION_RIGHT;
+        }
+        if (orientation.equals(VECTOR_LEFT)){
+            return ACTIONS.ACTION_LEFT;
+        }
+
+        return ACTIONS.ACTION_NIL;
+    }
+
+    private ACTIONS changeOrientation(Vector2d needed_orientation){
+        return move(needed_orientation);
+    }
+
+    private Vector2d getAdjacentAgentSpace(int x, int y){
+        if (agent_nav_matrix[x-1][y]){
+            return new Vector2d((x-1)*block_size, y*block_size);
+        }
+
+        if (agent_nav_matrix[x+1][y]){
+            return new Vector2d((x+1)*block_size, y*block_size);
+        }
+
+        if (agent_nav_matrix[x][y-1]){
+            return new Vector2d(x*block_size, (y-1)*block_size);
+        }
+
+        if (agent_nav_matrix[x][y+1]){
+            return new Vector2d(x*block_size, (y+1)*block_size);
+        }
+
+        return null;
+    }
+
+    private Queue<ACTIONS> getActionsToReachPosition(Vector2d start, Vector2d goal, Vector2d start_orientation){
+        Queue<ACTIONS> actions_queue = new LinkedList<>();
+
+        // If goal is not in the agent space, the queue is returned empty
+        if (!agent_nav_matrix[(int)goal.x/block_size][(int)goal.y/block_size]){
+            return actions_queue;
+        }
+
+        List<Vector2d> path = aStarPath(start, goal);
+        System.out.println(path);
+
+        if (path.isEmpty()){
+            actions_queue.add(ACTIONS.ACTION_NIL);
+        }
+
+        Vector2d current_pos = start;
+        Vector2d current_orientation = new Vector2d(start_orientation.x, start_orientation.y);
+        Vector2d needed_orientation = new Vector2d(0,0);
+        for (int k=0; k < path.size(); k++){
+            Vector2d next_pos = path.get(k);
+
+            // It is obtained the difference between the vectors to figure out the orientation that should be applied
+            // It is needed to normalise the orientation vector to work in the same conditions
+            needed_orientation.set(next_pos.x - current_pos.x, next_pos.y - current_pos.y);
+            needed_orientation.normalise();
+
+            if (!current_orientation.equals(needed_orientation)){
+                actions_queue.add(changeOrientation(needed_orientation));
+                current_orientation.set(needed_orientation.x, needed_orientation.y);
             }
-            System.out.print("); ");
-        }else System.out.print(str + ": 0; ");
+
+            // Move
+            actions_queue.add(move(current_orientation));
+            current_pos = next_pos;
+        }
+
+        return actions_queue;
     }
 
     /* Fills the neighbours list with the reachable positions from the current one
@@ -428,10 +561,32 @@ public class Agent extends AbstractMultiPlayer {
                     return new ArrayList<>();
                 }
             }
-            path.add(start);
+            //path.add(start);
             Collections.reverse(path);
         }
 
         return path;
+    }
+
+    /**
+     * Prints the number of different types of sprites available in the "positions" array.
+     * Between brackets, the number of observations of each type.
+     * @param positions array with observations.
+     * @param str identifier to print
+     */
+    private void printDebug(ArrayList<Observation>[] positions, String str)
+    {
+        if(positions != null){
+            System.out.print(str + ":" + positions.length + "(");
+            for (int i = 0; i < positions.length; i++) {
+                System.out.print(positions[i].size() + ",");
+                for (int j=0; j < positions[i].size(); j++) {
+                    Vector2d obs = positions[i].get(j).position;
+                    /*System.out.print(obs.x + " " + obs.y);
+                    System.out.println();*/
+                }
+            }
+            System.out.print("); ");
+        }else System.out.print(str + ": 0; ");
     }
 }
