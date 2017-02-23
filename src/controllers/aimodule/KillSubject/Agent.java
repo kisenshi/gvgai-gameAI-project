@@ -181,7 +181,7 @@ public class Agent extends AbstractMultiPlayer {
                 deployed = false;
             }
             if (!deployed){
-                System.out.println("DEPLOYING");
+                // Delay added to every shoot as people was becoming crazy...
                 actions_list.clear();
                 actions_list.addAll(slowDown(4));
                 actions_list.addAll(shootAvatar(agentpos, avatarpos, agentorientation));
@@ -192,66 +192,16 @@ public class Agent extends AbstractMultiPlayer {
             deployed = false;
             // It there are actions planned to carry out, no search is made unless the avatar has changed their area
             if (actions_list == null || actions_list.isEmpty() || hasAvatarChangedArea(avatarpos)) {
-                System.out.println("IS ANYONE THERE?");
-                // Looks for the closest spot to shoot the subject 0.0
+                // Looks for the best closest spot to shoot the subject 0.0
                 Vector2d best_spot = getBestSpotToShootAvatar(agentpos, vision_path_to_avatar);
                 actions_list = getActionsToReachPosition(agentpos, best_spot, agentorientation);
             }
         }
 
-        //System.out.println("Changed?? "+hasAvatarChangedArea(avatarpos));
         lastAvatarArea = getAreaLocated(avatarpos);
 
-        /*int cakearea = -1;
-        int avatararea = -1;
-        int agentarea = -1;
-
-        // In which area is each element?
-        for (int k=0; k < areas.size(); k++){
-            ArrayList c_area = areas.get(k);
-            if ((cakearea == -1)&&(c_area.contains(cakepos))){
-                cakearea = k;
-            }
-            if ((avatararea == -1)&&(c_area.contains(avatarpos))){
-                avatararea = k;
-            }
-            if ((agentarea == -1)&&(c_area.contains(agentpos))){
-                agentarea = k;
-            }
-        }*/
-
-        /*System.out.println();
-        System.out.print("DISTRIBUTION: cake: "+cakearea+"avatar: "+avatararea+"agent: "+agentarea);
-
-        System.out.println();
-        for (int i = 0; i < grid_width; i++){
-            for (int j = 0; j < grid_height; j++){
-                if (agentpos.x / block_size == i && agentpos.y / block_size == j){
-                    System.out.print(" T ");
-                }else if (avatarpos.x / block_size == i && avatarpos.y / block_size == j) {
-                    System.out.print(" A ");
-                }else if (cakepos.x / block_size == i && cakepos.y / block_size == j) {
-                    System.out.print(" C ");
-                } else if (agent_nav_matrix[i][j]){
-                    System.out.print(" - ");
-                }else {
-                    System.out.print(" X ");
-                }
-
-            }
-            System.out.println();
-        }
-        System.out.println();*/
-
-        /*ArrayList<ACTIONS> a = stateObs.getAvailableActions(id);
-        System.out.println(a);
-
-        if((previous_action == ACTIONS.ACTION_NIL)||(ACTIONS.isMoving(previous_action))){
-            previous_action = ACTIONS.ACTION_USE;
-            return ACTIONS.ACTION_USE;
-        }*/
-
-        return carryOutNextAction(actions_list);
+        // Returns the next action planned
+        return carryOutNextAction();
     }
 
     /**
@@ -259,6 +209,9 @@ public class Agent extends AbstractMultiPlayer {
      * Functions that allow the agent to check the world status and decide how to act depending on it
      */
 
+    /*
+    * Checks if the coordinates belongs to a position out of the grid
+    * */
     private boolean isOutOfBounds(int x, int y){
         if ((x < 0) || (x >= grid_width)){
             return true;
@@ -269,6 +222,9 @@ public class Agent extends AbstractMultiPlayer {
         return false;
     }
 
+    /*
+    * Returns the id of the area the provided location belongs to
+    * */
     private int getAreaLocated(Vector2d location){
         int area = -1;
 
@@ -284,6 +240,10 @@ public class Agent extends AbstractMultiPlayer {
         return area;
     }
 
+    /*
+    * Checks if the avatar has changed its area comparing her current position
+    * with the one stored last
+    * */
     private boolean hasAvatarChangedArea(Vector2d avatarpos){
         // Checks if the avatar has changed the area since the last tick
         int avatararea = getAreaLocated(avatarpos);
@@ -292,14 +252,23 @@ public class Agent extends AbstractMultiPlayer {
         return (lastAvatarArea != avatararea);
     }
 
+    /*
+    * Checks if the agent and the avatar are in line
+    * It is provided the positions that are in sight from the avatar and checks if
+    * the agent is in one of them
+    * */
     private boolean isAvatarInSight(List<Vector2d> avatar_in_sight_positions, Vector2d position){
         return avatar_in_sight_positions.contains(position);
     }
 
+    /*
+    * Returns the best position the agent should move to
+    * Goes through every avatar in sight positions and chooses the closest one to the agent
+    * */
     private Vector2d getBestSpotToShootAvatar(Vector2d agentpos, List<Vector2d> avatar_in_sight_positions){
         Vector2d best_position = new Vector2d(0,0);
         double best_dist = 1000000000;
-        double spot_dist = 0;
+        double spot_dist;
         for (int i=0; i < avatar_in_sight_positions.size(); i++){
             Vector2d position = avatar_in_sight_positions.get(i);
             if (!cake_positions.contains(position)) {
@@ -315,6 +284,11 @@ public class Agent extends AbstractMultiPlayer {
         return best_position;
     }
 
+    /*
+    * Returns the position that are in sight from the avatar
+    * Starting with distance 1, checks if the spot is in the agent space
+    * Distance is increased until there are no more in sight spots and the algorithm finished
+    * */
     private List<Vector2d> getVisionPathToAvatar(Vector2d avatarpos){
         // In every direction, it is checked if the tales are in the agent space and include them in the vision path
         // to avatar positions
@@ -386,28 +360,28 @@ public class Agent extends AbstractMultiPlayer {
      * SINGLE ACTIONS
      * */
 
-    private ACTIONS carryOutNextAction(Queue<ACTIONS> actions_queue) {
-        if (actions_queue.isEmpty()) {
+    /*
+    * Returns next action in the actions_list or NIL if it is empty
+    * */
+    private ACTIONS carryOutNextAction() {
+        if (actions_list.isEmpty()) {
             return ACTIONS.ACTION_NIL;
         }
 
-        return actions_queue.poll();
+        return actions_list.poll();
     }
 
+    /*
+    * Just shoots, which corresponds with ACTION_USE but defined for mental sanity when coding
+    * */
     private ACTIONS shoot(){
         return ACTIONS.ACTION_USE;
     }
 
-    private List<ACTIONS> slowDown(int ticks){
-        List<ACTIONS> slow_down_actions = new ArrayList<>();
-        for (int i=0; i < ticks; i++){
-            slow_down_actions.add(ACTIONS.ACTION_NIL);
-        }
-
-        return slow_down_actions;
-    }
-
-    /* Return the action to move in the desired direction */
+    /*
+    * Return the action that corresponds moving in the desired orientation
+    * Returns ACTION_NIL of the orientation provided is not a valid one
+    * */
     private ACTIONS move(Vector2d orientation){
         Vector2d VECTOR_UP = new Vector2d(0, -1);
         Vector2d VECTOR_DOWN = new Vector2d(0, 1);
@@ -430,18 +404,35 @@ public class Agent extends AbstractMultiPlayer {
         return ACTIONS.ACTION_NIL;
     }
 
-    /* Returns the action to change the orientation to be able to perform actions in that direction
-     * Basically is the same as moving but makes it easier to declare a new function to make calls based
-     * on the desired behaviour
-     * */
+    /*
+    * Returns the action to change the orientation to be able to perform actions in that direction
+    * Basically is the same as moving but defined for mental sanity when coding
+    * */
     private ACTIONS changeOrientation(Vector2d needed_orientation){
         return move(needed_orientation);
     }
 
     /**
-     * QUEUE OF ACTIONS
+     * SERIES OF ACTIONS
      * */
 
+    /*
+    * Agent is too fast and it needs to alternate actions with do-nothing actions
+    * It is provided the number of ticks the agent should just do-nothing
+    * */
+    private List<ACTIONS> slowDown(int ticks){
+        List<ACTIONS> slow_down_actions = new ArrayList<>();
+        for (int i=0; i < ticks; i++){
+            slow_down_actions.add(ACTIONS.ACTION_NIL);
+        }
+
+        return slow_down_actions;
+    }
+
+    /*
+    * Shoots the avatar
+    * Checks if the turret is pointing to the avatar first and, if not, changes agent orientation first
+    * */
     private Queue<ACTIONS> shootAvatar(Vector2d agentpos, Vector2d avatarpos, Vector2d agentorientation){
         Queue<ACTIONS> actions_queue =  new LinkedList<>();
 
@@ -460,6 +451,13 @@ public class Agent extends AbstractMultiPlayer {
         return actions_queue;
     }
 
+    /*
+    * Returns the actions enqueued to be able to reach the goal position
+    * Runs A* algorithm to obtain optimal positions path
+    * Transforms the calculated path into valid actions for the agent and returns it
+    * It is needed to alternate the agent movement with do-nothing actions to slow it down
+    * as it was too difficult to run away from it
+    * */
     private Queue<ACTIONS> getActionsToReachPosition(Vector2d start, Vector2d goal, Vector2d start_orientation){
         Queue<ACTIONS> actions_queue = new LinkedList<>();
 
@@ -469,7 +467,6 @@ public class Agent extends AbstractMultiPlayer {
         }
 
         List<Vector2d> path = aStarPath(start, goal);
-        //System.out.println(path);
 
         if (path.isEmpty()){
             actions_queue.add(ACTIONS.ACTION_NIL);
@@ -505,8 +502,10 @@ public class Agent extends AbstractMultiPlayer {
      * AStar implementation & needed helper classes and functions
      * */
 
-    /* Fills the neighbours list with the reachable positions from the current one
-     * It is checked TOP, RIGHT, DOWN and LEFT as it is not possible to move in diagonal */
+    /*
+    * Fills the neighbours list with the reachable positions from the current one
+    * It is checked TOP, RIGHT, DOWN and LEFT as it is not possible to move in diagonal
+    * */
     private void getCurrentPositionNeighbours(List<Vector2d> neighbours, Vector2d c_pos){
         int x = (int)c_pos.x / block_size;
         int y = (int)c_pos.y / block_size;
@@ -532,9 +531,11 @@ public class Agent extends AbstractMultiPlayer {
         return;
     }
 
-    /* Object to be used in the PriorityQueue containing the vector2d position and the cost assigned to it
-    *  It has been implemented the Comparable interface (compareTo function) to be able to be used in the
-    *  priority Queue directly */
+    /*
+    * Object to be used in the PriorityQueue containing the vector2d position and the cost assigned to it
+    * It has been implemented the Comparable interface (compareTo function) to be able to be used in the
+    * priority Queue directly
+    * */
     private class NodePosition implements Comparable<NodePosition>{
         public Vector2d position;
         public double cost;
@@ -556,8 +557,10 @@ public class Agent extends AbstractMultiPlayer {
         }
     }
 
-    /* Solution for being able to map two Keys to be able to use vector coordinates as index
-    *  Found in StackOverflow: http://stackoverflow.com/a/14678042 and adapted to my needs */
+    /*
+    * Solution for being able to map two Keys to be able to use vector coordinates as index
+    * Found in StackOverflow: http://stackoverflow.com/a/14678042 and adapted to my needs
+    * */
     public class VectorKeys {
 
         private int x;
@@ -590,11 +593,19 @@ public class Agent extends AbstractMultiPlayer {
 
     }
 
+    /*
+    * Heuristic to be used for the aStar algorithm
+    * It is used the distance to the goal
+    * */
     private double aStarHeuristic(Vector2d position, Vector2d goal){
         // The distance to the goal is returned as the heuristic
         return position.dist(goal);
     }
 
+    /*
+    * A* algorithm
+    * Returns a list of Vector2D which corresponds the spots that should be followed
+    * */
     private List<Vector2d> aStarPath(Vector2d start, Vector2d goal){
         //System.out.println("Looking path from "+start+" to "+goal);
 
@@ -668,30 +679,7 @@ public class Agent extends AbstractMultiPlayer {
         return path;
     }
 
-
     /**
-     * DEBUG
+     * FOR DEBUG
      */
-
-    /**
-     * Prints the number of different types of sprites available in the "positions" array.
-     * Between brackets, the number of observations of each type.
-     * @param positions array with observations.
-     * @param str identifier to print
-     */
-    private void printDebug(ArrayList<Observation>[] positions, String str)
-    {
-        if(positions != null){
-            System.out.print(str + ":" + positions.length + "(");
-            for (int i = 0; i < positions.length; i++) {
-                System.out.print(positions[i].size() + ",");
-                for (int j=0; j < positions[i].size(); j++) {
-                    Vector2d obs = positions[i].get(j).position;
-                    /*System.out.print(obs.x + " " + obs.y);
-                    System.out.println();*/
-                }
-            }
-            System.out.print("); ");
-        }else System.out.print(str + ": 0; ");
-    }
 }
