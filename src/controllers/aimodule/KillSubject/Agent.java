@@ -1,4 +1,4 @@
-package controllers.aimodule.Test;
+package controllers.aimodule.KillSubject;
 
 import core.game.Observation;
 import core.game.StateObservationMulti;
@@ -198,7 +198,6 @@ public class Agent extends AbstractMultiPlayer {
         int agentarea = -1;
 
         /* In which area is each element? */
-        int n_areas = areas.size();
         for (int k=0; k < areas.size(); k++){
             ArrayList c_area = areas.get(k);
             if ((cakearea == -1)&&(c_area.contains(cakepos))){
@@ -379,7 +378,6 @@ public class Agent extends AbstractMultiPlayer {
 
         while(!frontier.isEmpty()){
             NodePosition currentNode = frontier.poll();
-            //System.out.println(currentNode.position);
             if (currentNode.position.equals(goal)){
                 // GOAL HAS BEEN FOUND YAYYYYYYY
                 goal_found = true;

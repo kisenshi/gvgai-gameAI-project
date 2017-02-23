@@ -11,7 +11,7 @@ public class ModuleGame {
 
         // Controllers
         String humanController = "controllers.multiPlayer.human.Agent";
-        String testController = "controllers.aimodule.Test.Agent";
+        String testController = "controllers.aimodule.KillSubject.Agent";
 
         // Tests
         String randomController = "controllers.multiPlayer.sampleRandom.Agent";
