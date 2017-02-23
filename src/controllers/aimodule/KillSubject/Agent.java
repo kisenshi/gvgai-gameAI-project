@@ -30,10 +30,8 @@ public class Agent extends AbstractMultiPlayer {
     protected int grid_height;
     protected int block_size;
 
-    //TEST
-    protected List<Vector2d> path_to_hell = null;
     private Queue<ACTIONS> actions_list = null;
-    //
+    private boolean deployed = false;
 
     protected CurrentPlan plan;
 
@@ -241,15 +239,23 @@ public class Agent extends AbstractMultiPlayer {
         // It does not matter if there were something else planned
         if (isAvatarInSight(vision_path_to_avatar, agentpos)){
             // DEPLOYING!!!!
-            System.out.println("DEPLOYING");
-            actions_list = shootAvatar(agentpos, avatarpos, agentorientation);
+            if (actions_list == null || actions_list.isEmpty()) {
+                deployed = false;
+            }
+            if (!deployed){
+                System.out.println("DEPLOYING");
+                actions_list.clear();
+                actions_list.addAll(slowDown(3));
+                actions_list.addAll(shootAvatar(agentpos, avatarpos, agentorientation));
+                deployed = true;
+            }
         } else {
             // IS ANYONE THERE?
-            // Looks for the closest spot to shoot the subject 0.0
-            System.out.println("IS ANYONE THERE?");
-
+            deployed = false;
             // It there are actions planned to carry out, no search is made
             if (actions_list == null || actions_list.isEmpty()) {
+                System.out.println("IS ANYONE THERE?");
+                // Looks for the closest spot to shoot the subject 0.0
                 Vector2d best_spot = getBestSpotToShootAvatar(agentpos, vision_path_to_avatar);
                 actions_list = getActionsToReachPosition(agentpos, best_spot, agentorientation);
             }
@@ -426,9 +432,9 @@ public class Agent extends AbstractMultiPlayer {
         return ACTIONS.ACTION_USE;
     }
 
-    private List<ACTIONS> slowDown(){
+    private List<ACTIONS> slowDown(int ticks){
         List<ACTIONS> slow_down_actions = new ArrayList<>();
-        for (int i=0; i < 9; i++){
+        for (int i=0; i < ticks; i++){
             slow_down_actions.add(ACTIONS.ACTION_NIL);
         }
 
@@ -521,7 +527,7 @@ public class Agent extends AbstractMultiPlayer {
 
             // Move
             actions_queue.add(move(current_orientation));
-            actions_queue.addAll(slowDown());
+            actions_queue.addAll(slowDown(9));
             current_pos = next_pos;
         }
 
@@ -624,7 +630,7 @@ public class Agent extends AbstractMultiPlayer {
     }
 
     private List<Vector2d> aStarPath(Vector2d start, Vector2d goal){
-        System.out.println("Looking path from "+start+" to "+goal);
+        //System.out.println("Looking path from "+start+" to "+goal);
 
         PriorityQueue<NodePosition> frontier = new PriorityQueue<>();
         Map<VectorKeys, Vector2d> visited_from = new HashMap<>();
