@@ -240,14 +240,19 @@ public class Agent extends AbstractMultiPlayer {
         if (actions_list == null || actions_list.isEmpty()) {
 
             List<Vector2d> vision_path_to_avatar = getVisionPathToAvatar(avatarpos);
-
+            if (isAvatarInSight(vision_path_to_avatar, agentpos)){
+                System.out.println("DEPLOYING");
+            } else {
+                System.out.println("IS ANYONE THERE?");
+            }
             System.out.println(avatarpos);
             System.out.println(vision_path_to_avatar);
             System.out.println();
 
             actions_list = getActionsToReachPosition(agentpos, avatarpos, agentorientation);
             // When the position is reached, SHOOT
-            actions_list.addAll(shoot());
+            //actions_list.addAll(shoot());
+
         }
 
         int cakearea = -1;
@@ -307,6 +312,21 @@ public class Agent extends AbstractMultiPlayer {
      * Functions that allow the agent to check the world status and decide how to act depending on it
      */
 
+    private boolean isOutOfBounds(int x, int y){
+        if ((x < 0) || (x >= grid_width)){
+            return true;
+        }
+        if ((y < 0) || (y >= grid_height)){
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isAvatarInSight(List<Vector2d> avatar_in_sight_positions, Vector2d position){
+        return avatar_in_sight_positions.contains(position);
+    }
+
     private List<Vector2d> getVisionPathToAvatar(Vector2d avatarpos){
         // In every direction, it is checked if the tales are in the agent space and include them in the vision path
         // to avatar positions
@@ -316,13 +336,15 @@ public class Agent extends AbstractMultiPlayer {
         int y = (int)avatarpos.y / block_size;
 
         int d = 1; // The distance from the avatar to check
+        int coord = 0;
         boolean checkR = true, checkL = true, checkU = true, checkD = true;
         while (checkR || checkL || checkU || checkD){
-            System.out.println(d);
             // Right vision positions
             if (checkR){
-                if (agent_nav_matrix[x + d][y]){
-                    vision_to_avatar_list.add(new Vector2d((x + d)*block_size, y*block_size));
+                coord = x + d;
+
+                if (!isOutOfBounds(coord, y) && (agent_nav_matrix[coord][y])){
+                    vision_to_avatar_list.add(new Vector2d(coord*block_size, y*block_size));
                 } else {
                     // End of vision to the right reached
                     checkR = false;
@@ -330,8 +352,10 @@ public class Agent extends AbstractMultiPlayer {
             }
             // Left vision positions
             if (checkL){
-                if (agent_nav_matrix[x - d][y]){
-                    vision_to_avatar_list.add(new Vector2d((x - d)*block_size, y*block_size));
+                coord = x - d;
+
+                if (!isOutOfBounds(coord, y) && (agent_nav_matrix[coord][y])){
+                    vision_to_avatar_list.add(new Vector2d(coord*block_size, y*block_size));
                 } else {
                     // End of vision to the left reached
                     checkL = false;
@@ -339,8 +363,10 @@ public class Agent extends AbstractMultiPlayer {
             }
             // Up vision position
             if (checkU){
-                if (agent_nav_matrix[x][y - d]){
-                    vision_to_avatar_list.add(new Vector2d(x*block_size, (y - d)*block_size));
+                coord = y - d;
+
+                if (!isOutOfBounds(x, coord) && (agent_nav_matrix[x][coord])){
+                    vision_to_avatar_list.add(new Vector2d(x*block_size, coord*block_size));
                 } else {
                     // End of vision up reached
                     checkU = false;
@@ -348,8 +374,10 @@ public class Agent extends AbstractMultiPlayer {
             }
             // Down vision position
             if (checkD){
-                if (agent_nav_matrix[x][y + d]){
-                    vision_to_avatar_list.add(new Vector2d(x*block_size, (y + d)*block_size));
+                coord = y + d;
+
+                if (!isOutOfBounds(x, coord) && (agent_nav_matrix[x][coord])){
+                    vision_to_avatar_list.add(new Vector2d(x*block_size, coord*block_size));
                 } else {
                     // End of vision down reached
                     checkD = false;
