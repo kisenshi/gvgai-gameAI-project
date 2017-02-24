@@ -136,13 +136,16 @@ The following changes were implemented:
 These changes were implemented and playtested until they were satisfactory.
 It was suggested to create easiest levels in order to get familiar with the controllers (movement and portal creation) before being chased by the turret.
 
+Some bugs were fixed thanks to this playtesting as well:
+
++ Cakes positions were taken into consideration as the best spot to shoot the avatar but they shouldn't because the avatar cant not go through them or step on them
++ Cakes positions were taken into consideration in the pathfinding algorithm and they shouldn't as the agent is not allowed to walk through them. Therefore, the A-Star algorithm should be updated to ignore these positions.
+
 -------
 
 ## Improvements
 
 There are some improvements that would be great to make and I'm thinking to include in the future:
-
-+ _Small bug fix_: Cakes positions are taken into consideration in the pathfinding algorithm and they shouldn't as the agent is not allowed to walk through them. Therefore, the A-Star algorithm should be updated to ignore these positions.
 
 + _A-Star heuristic improvement_: Currently, all moves are considered with cost 1 (apart from the heuristic based on the distance) but when the agent is facing one direction, if a certain movement implies a new orientation, it takes two movements (change direction + actual move). The algorithm should be updated to consider these cases with cost 2 and not 1.
 
