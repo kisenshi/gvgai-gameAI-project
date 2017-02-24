@@ -638,16 +638,20 @@ public class Agent extends AbstractMultiPlayer {
 
             for(int k=0; k < neighbours.size(); k++){
                 Vector2d next = neighbours.get(k);
-                VectorKeys next_keys = new VectorKeys((int)next.x, (int)next.y);
 
-                double next_cost = cost_so_far.get(currentNode_keys) + 1; // all costs are 1
+                // If there is a cake in that position, it must be ignored as the agent cant go through them
+                if (!cake_positions.contains(next)) {
+                    VectorKeys next_keys = new VectorKeys((int)next.x, (int)next.y);
 
-                if (!cost_so_far.containsKey(next_keys) || next_cost < cost_so_far.get(next_keys)){
-                    NodePosition next_node_pos = new NodePosition(next, next_cost+aStarHeuristic(next, goal));
+                    double next_cost = cost_so_far.get(currentNode_keys) + 1; // all costs are 1
 
-                    frontier.add(next_node_pos);
-                    visited_from.put(next_keys, currentNode.position);
-                    cost_so_far.put(next_keys, next_cost);
+                    if (!cost_so_far.containsKey(next_keys) || next_cost < cost_so_far.get(next_keys)){
+                        NodePosition next_node_pos = new NodePosition(next, next_cost+aStarHeuristic(next, goal));
+
+                        frontier.add(next_node_pos);
+                        visited_from.put(next_keys, currentNode.position);
+                        cost_so_far.put(next_keys, next_cost);
+                    }
                 }
             }
         }
