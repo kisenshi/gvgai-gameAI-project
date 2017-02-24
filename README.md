@@ -97,6 +97,10 @@ The AI decision logic goes as follows:
 
 3. The next action planned is carried out.
 
+### Gameplay video
+
+[![Portal 2D gameplay](https://img.youtube.com/vi/kYGupL5YHAk/0.jpg)](https://www.youtube.com/watch?v=kYGupL5YHAk)
+
 ### Playtesting
 
 Playtesting sessions have been very helpful to improve the game and the AI. 
