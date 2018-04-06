@@ -22,12 +22,16 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
                 portalBlue > stype=portalOrange img=aimodule/chamber_wall_blue
                 portalOrange > stype=portalBlue img=aimodule/chamber_wall_orange
 
-        movable > ShootAvatar
-            subject >
-                subjectBlue > stype=portalShotBlue img=aimodule/chell_blue
-                subjectOrange > stype=portalShotOrange img=aimodule/chell_orange
+        movable >
+            subjectAvatar >
+                noShooterSubject > MovingAvatar
+                    noShooterBlue > img=aimodule/chell_blue
+                    noShooterOrange > img=aimodule/chell_orange
+                subject > ShootAvatar
+                    subjectBlue > stype=portalShotBlue img=aimodule/chell_blue
+                    subjectOrange > stype=portalShotOrange img=aimodule/chell_orange
 
-            turret > stype=laser img=aimodule/turret
+            turret > ShootAvatar stype=laser img=aimodule/turret
 
     LevelMapping
         . > floor
@@ -41,18 +45,26 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         movable wall movable EOS > stepBack
         laser wall > killSprite
         turret cake portal > stepBack
-        subject laser trap > killSprite
-        cake subject > killSprite
+        subjectAvatar laser trap > killSprite
+        cake subjectAvatar > killSprite
 
         # To avoid infinite teleportation the exit portal is disabled during a small period of time
-        subject portalBlue > transformToAll stype=portalOrange stypeTo=portalOrangeDisabled
-        subject portalBlue > addTimer timer=35 ftype=transformToAll stype=portalOrangeDisabled stypeTo=portalOrange
-        subject portalOrange > transformToAll stype=portalBlue stypeTo=portalBlueDisabled
-        subject portalOrange > addTimer timer=35 ftype=transformToAll stype=portalBlueDisabled stypeTo=portalBlue
+        # NOTE: The logic has been updated to disable the avatar instead as there was a small bug
+        # Leaving the old code for future reference
+        #subject portalBlue > transformToAll stype=portalOrange stypeTo=portalOrangeDisabled
+        #subject portalBlue > addTimer timer=35 ftype=transformToAll stype=portalOrangeDisabled stypeTo=portalOrange
+        #subject portalOrange > transformToAll stype=portalBlue stypeTo=portalBlueDisabled
+        #subject portalOrange > addTimer timer=35 ftype=transformToAll stype=portalBlueDisabled stypeTo=portalBlue
 
         # If the portal is enabled, Chell is teleported to the other one
         subject workingPortal > teleportToExit
 
+        # Disabling shooting avatar after teleport for a brief period of time
+        # This disables infinite loop teleport AND fixes small bug of multiple portal creation
+        subjectBlue workingPortal > addTimer timer=20 ftype=transformToAll stype=noShooterBlue stypeTo=subjectBlue
+        subjectBlue workingPortal > transformTo stype=noShooterBlue
+        subjectOrange workingPortal > addTimer timer=20 ftype=transformToAll stype=noShooterOrange stypeTo=subjectOrange
+        subjectOrange workingPortal > transformTo stype=noShooterOrange
 
         # Logic to create Portals when shooting to a wall. Still can't believe it is working *.*
         portalShotBlue wall  > transformToAll stype=subjectBlue stypeTo=subjectOrange
@@ -67,13 +79,12 @@ BasicGame key_handler=Pulse no_players=2 square_size=50
         wall portalShotOrange > killAll stype=subjectOrange
         wall portalShotOrange > transformTo stype=portalOrange
 
-
         # shots should not go through Portals
         portalShotBlue portal > killSprite
         portalShotOrange portal > killSprite
 
     TerminationSet
         SpriteCounter stype=cake    limit=0 win=True,False
-        SpriteCounter stype=subject limit=0 win=False,True
+        MultiSpriteCounter stype1=subject stype2=noShooterSubject limit=0 win=False,True
 
 
